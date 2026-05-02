@@ -2,7 +2,7 @@ import streamlit as st
 import openai
 
 # --- SYSTEM PROMPT ---
-SYSTEM_PROMPT = """PATIENT-SIDE AI AGENT
+PATIENT_SYSTEM_PROMPT = """PATIENT-SIDE AI AGENT
 SYSTEM PROMPT (TEST VERSION)
 AGENT CONTEXT
 
@@ -202,10 +202,53 @@ Escalate pain clearly and immediately
 You are a companion, not a clinician
 """
 
-st.set_page_config(page_title="Physio Companion", page_icon="💪", layout="centered")
+PHYSIO_SYSTEM_PROMPT = """PHYSIOTHERAPIST-SIDE AI AGENT
+SYSTEM PROMPT
 
-st.title("💪 Physio Companion AI")
-st.markdown("Your digital physiotherapy rehabilitation support.")
+AGENT CONTEXT
+You are a clinical decision support AI designed specifically for physiotherapists.
+You operate on the clinician side of a digital rehabilitation platform.
+Your primary user is a licensed physiotherapist.
+
+CORE PURPOSE
+You are designed to:
+- Assist in analyzing patient check-in data and adherence trends.
+- Suggest exercise progressions, regressions, or lateral modifications based on patient feedback (e.g., reported pain or ease of execution).
+- Provide quick summaries of evidence-based clinical guidelines for specific musculoskeletal conditions.
+- Help draft clinical notes, patient summaries, or educational messages to be sent to the patient.
+
+ROLE BOUNDARIES
+- You are a sounding board and analytical assistant, NOT the primary clinician.
+- Always defer to the physiotherapist's clinical judgment.
+- Do not make definitive diagnoses; instead, offer differential considerations based on current evidence.
+
+TONE AND COMMUNICATION STYLE
+- Register: Professional, clinical, precise, and concise. Use appropriate medical terminology.
+- Structure: Highly structured. Use bullet points, bold text for key metrics, and clear sections.
+
+CORE INTERACTIONS
+1. Patient Data Analysis: When provided with a patient's recent logs, summarize adherence, pain reports, and flag any concerning trends.
+2. Programme Design: Suggest variations of exercises (e.g., "To regress the loaded squat, consider a wall sit or assisted squat").
+3. Clinical Documentation: Format rough notes into structured SOAP (Subjective, Objective, Assessment, Plan) format if requested.
+"""
+
+st.set_page_config(page_title="Physio AI", page_icon="💪", layout="centered")
+
+with st.sidebar:
+    st.header("👤 Interface Mode")
+    app_mode = st.radio("Select Role", ["Patient (Rehab Support)", "Physiotherapist (Clinical Assistant)"])
+    st.markdown("---")
+
+if app_mode == "Patient (Rehab Support)":
+    st.title("💪 Patient Companion AI")
+    st.markdown("Your digital physiotherapy rehabilitation support.")
+    current_prompt = PATIENT_SYSTEM_PROMPT
+    welcome_msg = "Hello! I'm your physiotherapy companion. I'm here to support you with your exercises today. How are you feeling?"
+else:
+    st.title("🩺 Clinical Assistant AI")
+    st.markdown("Your clinical decision support and analysis assistant.")
+    current_prompt = PHYSIO_SYSTEM_PROMPT
+    welcome_msg = "Hello! I am your clinical AI assistant. I can help analyze patient data, suggest exercise progressions, or format clinical notes. How can I assist you today?"
 
 # --- API KEY HANDLING ---
 api_key = st.secrets.get("GROQ_API_KEY", st.secrets.get("OPENROUTER_API_KEY", st.secrets.get("OPENAI_API_KEY", "")))
@@ -227,10 +270,11 @@ with st.sidebar:
         st.success("API Key loaded from secrets!")
             
 # --- CHAT UI ---
-if "messages" not in st.session_state:
+if "app_mode" not in st.session_state or st.session_state.app_mode != app_mode:
+    st.session_state.app_mode = app_mode
     st.session_state.messages = [
-        {"role": "user", "content": "SYSTEM INSTRUCTION (Act exactly as described below):\n\n" + SYSTEM_PROMPT},
-        {"role": "assistant", "content": "Hello! I'm your physiotherapy companion. I'm here to support you with your exercises today. How are you feeling?"}
+        {"role": "user", "content": "SYSTEM INSTRUCTION (Act exactly as described below):\n\n" + current_prompt},
+        {"role": "assistant", "content": welcome_msg}
     ]
 
 # Display chat messages (excluding the hidden system instructions)
