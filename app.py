@@ -229,15 +229,14 @@ with st.sidebar:
 # --- CHAT UI ---
 if "messages" not in st.session_state:
     st.session_state.messages = [
-        {"role": "system", "content": SYSTEM_PROMPT},
+        {"role": "user", "content": "SYSTEM INSTRUCTION (Act exactly as described below):\n\n" + SYSTEM_PROMPT},
         {"role": "assistant", "content": "Hello! I'm your physiotherapy companion. I'm here to support you with your exercises today. How are you feeling?"}
     ]
 
-# Display chat messages (excluding the system prompt)
-for message in st.session_state.messages:
-    if message["role"] != "system":
-        with st.chat_message(message["role"]):
-            st.markdown(message["content"])
+# Display chat messages (excluding the hidden system instructions)
+for message in st.session_state.messages[1:]:
+    with st.chat_message(message["role"]):
+        st.markdown(message["content"])
 
 # User input
 if prompt := st.chat_input("Type your message here..."):
@@ -260,9 +259,9 @@ if prompt := st.chat_input("Type your message here..."):
                 api_key=api_key,
                 base_url="https://openrouter.ai/api/v1",
             )
-            # Using OpenRouter's fallback routing: if one model is busy, it automatically tries the next one!
+            # Using Google's highly stable and capable Gemma 3 27B model
             responses = client.chat.completions.create(
-                model="nousresearch/hermes-3-llama-3.1-405b:free,cognitivecomputations/dolphin-mistral-24b-venice-edition:free,meta-llama/llama-3.2-3b-instruct:free",
+                model="google/gemma-3-27b-it:free",
                 messages=[
                     {"role": m["role"], "content": m["content"]}
                     for m in st.session_state.messages
