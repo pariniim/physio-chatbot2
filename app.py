@@ -208,21 +208,21 @@ st.title("💪 Physio Companion AI")
 st.markdown("Your digital physiotherapy rehabilitation support.")
 
 # --- API KEY HANDLING ---
-api_key = st.secrets.get("OPENROUTER_API_KEY", st.secrets.get("OPENAI_API_KEY", ""))
+api_key = st.secrets.get("GROQ_API_KEY", st.secrets.get("OPENROUTER_API_KEY", st.secrets.get("OPENAI_API_KEY", "")))
 
 with st.sidebar:
     st.header("⚙️ Settings")
     if not api_key:
-        api_key = st.text_input("OpenRouter API Key", type="password", help="Enter your OpenRouter API key to start chatting.")
+        api_key = st.text_input("Groq API Key", type="password", help="Enter your Groq API key to start chatting.")
         st.markdown("This key is **not saved** and is only used for this session.")
         st.markdown("---")
         st.markdown("### How to get an API Key")
-        st.markdown("1. Go to [OpenRouter](https://openrouter.ai/keys)")
+        st.markdown("1. Go to [Groq Console](https://console.groq.com/keys)")
         st.markdown("2. Log in or sign up")
-        st.markdown("3. Click 'Create Key'")
+        st.markdown("3. Click 'Create API Key'")
         
-        if api_key and not api_key.startswith("sk-"):
-            st.warning("Please enter a valid API key starting with 'sk-'.")
+        if api_key and not (api_key.startswith("gsk_") or api_key.startswith("sk-")):
+            st.warning("Please enter a valid API key.")
     else:
         st.success("API Key loaded from secrets!")
             
@@ -241,7 +241,7 @@ for message in st.session_state.messages[1:]:
 # User input
 if prompt := st.chat_input("Type your message here..."):
     if not api_key:
-        st.info("Please enter your OpenAI API key in the sidebar to continue.")
+        st.info("Please enter your API key in the sidebar to continue.")
         st.stop()
         
     # Append user message
@@ -257,11 +257,11 @@ if prompt := st.chat_input("Type your message here..."):
         try:
             client = openai.OpenAI(
                 api_key=api_key,
-                base_url="https://openrouter.ai/api/v1",
+                base_url="https://api.groq.com/openai/v1",
             )
-            # Using Google's highly stable and capable Gemma 3 27B model
+            # Using Groq's lightning fast Llama 3.3 70B model
             responses = client.chat.completions.create(
-                model="google/gemma-3-27b-it:free",
+                model="llama-3.3-70b-versatile",
                 messages=[
                     {"role": m["role"], "content": m["content"]}
                     for m in st.session_state.messages
