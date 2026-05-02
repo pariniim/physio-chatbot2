@@ -262,7 +262,7 @@ if prompt := st.chat_input("Type your message here..."):
             )
             # Using a fast and stable free model from OpenRouter
             responses = client.chat.completions.create(
-                model="google/gemma-3-12b-it:free",
+                model="meta-llama/llama-3.2-3b-instruct:free",
                 messages=[
                     {"role": m["role"], "content": m["content"]}
                     for m in st.session_state.messages
