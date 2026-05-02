@@ -260,9 +260,9 @@ if prompt := st.chat_input("Type your message here..."):
                 api_key=api_key,
                 base_url="https://openrouter.ai/api/v1",
             )
-            # Using a fast and free model from OpenRouter
+            # Using a fast and stable free model from OpenRouter
             responses = client.chat.completions.create(
-                model="meta-llama/llama-3.3-70b-instruct:free",
+                model="google/gemma-2-9b-it:free",
                 messages=[
                     {"role": m["role"], "content": m["content"]}
                     for m in st.session_state.messages
