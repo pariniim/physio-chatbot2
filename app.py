@@ -208,21 +208,21 @@ st.title("💪 Physio Companion AI")
 st.markdown("Your digital physiotherapy rehabilitation support.")
 
 # --- API KEY HANDLING ---
-api_key = st.secrets.get("OPENAI_API_KEY", "")
+api_key = st.secrets.get("OPENROUTER_API_KEY", st.secrets.get("OPENAI_API_KEY", ""))
 
 with st.sidebar:
     st.header("⚙️ Settings")
     if not api_key:
-        api_key = st.text_input("OpenAI API Key", type="password", help="Enter your OpenAI API key to start chatting.")
+        api_key = st.text_input("OpenRouter API Key", type="password", help="Enter your OpenRouter API key to start chatting.")
         st.markdown("This key is **not saved** and is only used for this session.")
         st.markdown("---")
         st.markdown("### How to get an API Key")
-        st.markdown("1. Go to [OpenAI API](https://platform.openai.com/api-keys)")
+        st.markdown("1. Go to [OpenRouter](https://openrouter.ai/keys)")
         st.markdown("2. Log in or sign up")
-        st.markdown("3. Click 'Create new secret key'")
+        st.markdown("3. Click 'Create Key'")
         
         if api_key and not api_key.startswith("sk-"):
-            st.warning("Please enter a valid OpenAI API key starting with 'sk-'.")
+            st.warning("Please enter a valid API key starting with 'sk-'.")
     else:
         st.success("API Key loaded from secrets!")
             
@@ -256,10 +256,13 @@ if prompt := st.chat_input("Type your message here..."):
         full_response = ""
         
         try:
-            client = openai.OpenAI(api_key=api_key)
-            # Using gpt-4o-mini as it is fast, cheap, and very capable
+            client = openai.OpenAI(
+                api_key=api_key,
+                base_url="https://openrouter.ai/api/v1",
+            )
+            # Using a fast and free model from OpenRouter
             responses = client.chat.completions.create(
-                model="gpt-4o-mini",
+                model="meta-llama/llama-3-8b-instruct:free",
                 messages=[
                     {"role": m["role"], "content": m["content"]}
                     for m in st.session_state.messages
