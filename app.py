@@ -208,18 +208,23 @@ st.title("💪 Physio Companion AI")
 st.markdown("Your digital physiotherapy rehabilitation support.")
 
 # --- API KEY HANDLING ---
+api_key = st.secrets.get("OPENAI_API_KEY", "")
+
 with st.sidebar:
     st.header("⚙️ Settings")
-    api_key = st.text_input("OpenAI API Key", type="password", help="Enter your OpenAI API key to start chatting.")
-    st.markdown("This key is **not saved** and is only used for this session.")
-    st.markdown("---")
-    st.markdown("### How to get an API Key")
-    st.markdown("1. Go to [OpenAI API](https://platform.openai.com/api-keys)")
-    st.markdown("2. Log in or sign up")
-    st.markdown("3. Click 'Create new secret key'")
-    
-    if api_key and not api_key.startswith("sk-"):
-        st.warning("Please enter a valid OpenAI API key starting with 'sk-'.")
+    if not api_key:
+        api_key = st.text_input("OpenAI API Key", type="password", help="Enter your OpenAI API key to start chatting.")
+        st.markdown("This key is **not saved** and is only used for this session.")
+        st.markdown("---")
+        st.markdown("### How to get an API Key")
+        st.markdown("1. Go to [OpenAI API](https://platform.openai.com/api-keys)")
+        st.markdown("2. Log in or sign up")
+        st.markdown("3. Click 'Create new secret key'")
+        
+        if api_key and not api_key.startswith("sk-"):
+            st.warning("Please enter a valid OpenAI API key starting with 'sk-'.")
+    else:
+        st.success("API Key loaded from secrets!")
             
 # --- CHAT UI ---
 if "messages" not in st.session_state:
