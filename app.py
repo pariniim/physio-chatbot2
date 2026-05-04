@@ -697,13 +697,39 @@ def render_onboarding_interface():
             "physiotherapist": "",
             "preferred_days": [],
             "preferred_times": [],
+            "messages": [],
+            "completion_logged": False,
         },
     )
 
+    def append_onboarding_message(role, content):
+        if ui_state["messages"]:
+            last = ui_state["messages"][-1]
+            if last["role"] == role and last["content"] == content:
+                return
+        ui_state["messages"].append(
+            {
+                "role": role,
+                "content": content,
+                "ts": datetime.now().isoformat(timespec="seconds"),
+            }
+        )
+
+    # Seed initial assistant message once.
+    if not ui_state["messages"]:
+        append_onboarding_message("assistant", "Hi Sarah! I'm Movy. Let's start with a few quick questions.")
+
+    # Always render full transcript first to keep a continuous conversation flow.
+    for msg in ui_state["messages"]:
+        if msg["role"] == "assistant":
+            render_assistant_bubble(msg["content"], msg.get("ts"))
+        else:
+            render_patient_bubble(msg["content"], msg.get("ts"))
+
     if ui_state["screen"] == 1:
-        render_assistant_bubble("Hi Sarah! I'm Movy. Let's start with a few quick questions.")
         primary_col, secondary_col = st.columns([2, 1])
         if primary_col.button("Start session", use_container_width=True, type="primary"):
+            append_onboarding_message("assistant", "Can you confirm your name and date of birth?")
             ui_state["screen"] = 2
             st.rerun()
         if secondary_col.button("Skip", use_container_width=True):
@@ -711,7 +737,6 @@ def render_onboarding_interface():
         return
 
     if ui_state["screen"] == 2:
-        render_assistant_bubble("Can you confirm your name and date of birth?")
         identity_text = st.text_input(
             "Name and date of birth",
             value="",
@@ -725,11 +750,11 @@ def render_onboarding_interface():
             else:
                 ui_state["name"] = parsed_name
                 ui_state["date_of_birth"] = parsed_dob
+                append_onboarding_message("user", f"{ui_state['name']}, {ui_state['date_of_birth']}")
+                append_onboarding_message("assistant", "Which physiotherapist are you seeing?")
                 st.rerun()
 
         if ui_state["name"] and ui_state["date_of_birth"]:
-            render_patient_bubble(f"{ui_state['name']}, {ui_state['date_of_birth']}")
-            render_assistant_bubble("Which physiotherapist are you seeing?")
             options = [
                 "Dr. Emma Walsh",
                 "Dr. David Smith",
@@ -740,12 +765,22 @@ def render_onboarding_interface():
             for i, option in enumerate(options):
                 if option_cols[i % 2].button(option, use_container_width=True, key=f"physio_option_{i}"):
                     ui_state["physiotherapist"] = option
+                    append_onboarding_message("user", ui_state["physiotherapist"])
+                    append_onboarding_message(
+                        "assistant",
+                        "When do you prefer to exercise? Tap the days and times that work best.",
+                    )
                     ui_state["screen"] = 3
                     st.rerun()
             typed_physio = st.text_input("Or type your answer...", key="typed_physio_input")
             if st.button("Confirm physiotherapist"):
                 if typed_physio.strip():
                     ui_state["physiotherapist"] = typed_physio.strip()
+                    append_onboarding_message("user", ui_state["physiotherapist"])
+                    append_onboarding_message(
+                        "assistant",
+                        "When do you prefer to exercise? Tap the days and times that work best.",
+                    )
                     ui_state["screen"] = 3
                     st.rerun()
                 else:
@@ -753,10 +788,6 @@ def render_onboarding_interface():
         return
 
     if ui_state["screen"] == 3:
-        render_assistant_bubble("When do you prefer to exercise? Tap the days and times that work best.")
-        if ui_state["physiotherapist"]:
-            render_patient_bubble(ui_state["physiotherapist"])
-
         st.caption("Preferred days")
         ui_state["preferred_days"] = render_toggle_buttons(
             ["M", "T", "W", "Th", "F", "Sa", "Su"],
@@ -779,6 +810,10 @@ def render_onboarding_interface():
                 ui_state["preferred_times"] = parsed_times
 
         if ui_state["preferred_days"] and ui_state["preferred_times"]:
+            append_onboarding_message(
+                "user",
+                f"Days: {', '.join(ui_state['preferred_days'])} | Times: {', '.join(ui_state['preferred_times'])}",
+            )
             ui_state["screen"] = 4
             st.rerun()
         return
@@ -791,10 +826,10 @@ def render_onboarding_interface():
         "preferred_times": ui_state["preferred_times"],
         "status": "onboarding_complete",
     }
-    render_patient_bubble(
-        f"Days: {', '.join(ui_state['preferred_days'])} | Times: {', '.join(ui_state['preferred_times'])}"
-    )
-    render_assistant_bubble("Thanks, everything for your appointment is confirmed.")
+    if not ui_state["completion_logged"]:
+        append_onboarding_message("assistant", "Thanks, everything for your appointment is confirmed.")
+        ui_state["completion_logged"] = True
+        st.rerun()
     st.code(json.dumps(summary, indent=2), language="json")
 
 # --- API KEY HANDLING ---
