@@ -1,5 +1,6 @@
 import streamlit as st
 import openai
+import json
 
 # --- SYSTEM PROMPTS ---
 PATIENT_BASE_SYSTEM_PROMPT = """PATIENT-SIDE AI AGENT
@@ -542,6 +543,216 @@ else:
     current_prompt = PHYSIO_SYSTEM_PROMPT
     welcome_msg = "Hello! I am your clinical AI assistant. I can help analyze patient data, suggest exercise progressions, or format clinical notes. How can I assist you today?"
 
+
+def render_assistant_bubble(text):
+    st.markdown(
+        f"""
+        <div style="display:flex; justify-content:flex-start; margin:0.35rem 0;">
+          <div style="max-width:82%; background:#ffffff; color:#111827; padding:0.7rem 0.85rem;
+                      border-radius:18px 18px 18px 6px; box-shadow:0 2px 8px rgba(15,23,42,0.10);
+                      border:1px solid #e5e7eb;">
+            {text}
+          </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+def render_patient_bubble(text):
+    st.markdown(
+        f"""
+        <div style="display:flex; justify-content:flex-end; margin:0.35rem 0;">
+          <div style="max-width:82%; background:#2563eb; color:#ffffff; padding:0.7rem 0.85rem;
+                      border-radius:18px 18px 6px 18px; box-shadow:0 2px 8px rgba(15,23,42,0.15);">
+            {text}
+          </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+def parse_identity_input(raw_text):
+    if not raw_text:
+        return "", ""
+    parts = [p.strip() for p in raw_text.split(",") if p.strip()]
+    if len(parts) >= 2:
+        return parts[0], ", ".join(parts[1:])
+    return raw_text.strip(), ""
+
+
+def parse_schedule_text(raw_text):
+    if not raw_text:
+        return [], []
+    lowered = raw_text.lower()
+    day_map = {
+        "monday": "M",
+        "mon": "M",
+        "tuesday": "T",
+        "tue": "T",
+        "wednesday": "W",
+        "wed": "W",
+        "thursday": "Th",
+        "thu": "Th",
+        "friday": "F",
+        "fri": "F",
+        "saturday": "Sa",
+        "sat": "Sa",
+        "sunday": "Su",
+        "sun": "Su",
+    }
+    time_map = {
+        "morning": "Morning",
+        "mid-day": "Mid-day",
+        "midday": "Mid-day",
+        "afternoon": "Mid-day",
+        "evening": "Evening",
+        "night": "Evening",
+    }
+    days = sorted({v for k, v in day_map.items() if k in lowered}, key=["M", "T", "W", "Th", "F", "Sa", "Su"].index)
+    times = sorted({v for k, v in time_map.items() if k in lowered}, key=["Morning", "Mid-day", "Evening"].index)
+    return days, times
+
+
+def render_toggle_buttons(options, selected, key_prefix):
+    cols = st.columns(len(options))
+    updated = list(selected)
+    for idx, option in enumerate(options):
+        is_selected = option in updated
+        label = f"✓ {option}" if is_selected else option
+        if cols[idx].button(label, key=f"{key_prefix}_{option}"):
+            if option in updated:
+                updated.remove(option)
+            else:
+                updated.append(option)
+            st.rerun()
+    return updated
+
+
+def render_onboarding_interface():
+    st.markdown(
+        """
+        <div style="background:#f8fafc; border-radius:20px; box-shadow:0 6px 20px rgba(15,23,42,0.08);
+                    padding:0.85rem 1rem; border:1px solid #e5e7eb; margin-bottom:0.8rem;">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <span style="font-weight:700; color:#0f172a;">9:41</span>
+            <span style="font-weight:700; color:#0f172a;">Movy</span>
+          </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    ui_state = st.session_state.setdefault(
+        "onboarding_ui",
+        {
+            "screen": 1,
+            "name": "",
+            "date_of_birth": "",
+            "physiotherapist": "",
+            "preferred_days": [],
+            "preferred_times": [],
+        },
+    )
+
+    if ui_state["screen"] == 1:
+        render_assistant_bubble("Hi Sarah! I'm Movy. Let's start with a few quick questions.")
+        primary_col, secondary_col = st.columns([2, 1])
+        if primary_col.button("Start session", use_container_width=True, type="primary"):
+            ui_state["screen"] = 2
+            st.rerun()
+        if secondary_col.button("Skip", use_container_width=True):
+            st.info("Onboarding skipped (placeholder action).")
+        return
+
+    if ui_state["screen"] == 2:
+        render_assistant_bubble("Can you confirm your name and date of birth?")
+        identity_text = st.text_input(
+            "Name and date of birth",
+            value="",
+            placeholder="Sarah, 14 March 1990",
+            key="onboarding_identity_input",
+        )
+        if st.button("Confirm identity", type="primary"):
+            parsed_name, parsed_dob = parse_identity_input(identity_text)
+            if not parsed_name or not parsed_dob:
+                st.warning("Please include both name and date of birth.")
+            else:
+                ui_state["name"] = parsed_name
+                ui_state["date_of_birth"] = parsed_dob
+                st.rerun()
+
+        if ui_state["name"] and ui_state["date_of_birth"]:
+            render_patient_bubble(f"{ui_state['name']}, {ui_state['date_of_birth']}")
+            render_assistant_bubble("Which physiotherapist are you seeing?")
+            options = [
+                "Dr. Emma Walsh",
+                "Dr. David Smith",
+                "Dr. Priya Nair",
+                "Dr. Maria Di Stefano",
+            ]
+            option_cols = st.columns(2)
+            for i, option in enumerate(options):
+                if option_cols[i % 2].button(option, use_container_width=True, key=f"physio_option_{i}"):
+                    ui_state["physiotherapist"] = option
+                    ui_state["screen"] = 3
+                    st.rerun()
+            typed_physio = st.text_input("Or type your answer...", key="typed_physio_input")
+            if st.button("Confirm physiotherapist"):
+                if typed_physio.strip():
+                    ui_state["physiotherapist"] = typed_physio.strip()
+                    ui_state["screen"] = 3
+                    st.rerun()
+                else:
+                    st.warning("Please select or type a physiotherapist.")
+        return
+
+    if ui_state["screen"] == 3:
+        render_assistant_bubble("When do you prefer to exercise? Tap the days and times that work best.")
+        if ui_state["physiotherapist"]:
+            render_patient_bubble(ui_state["physiotherapist"])
+
+        st.caption("Preferred days")
+        ui_state["preferred_days"] = render_toggle_buttons(
+            ["M", "T", "W", "Th", "F", "Sa", "Su"],
+            ui_state["preferred_days"],
+            "day_toggle",
+        )
+        st.caption("Preferred times")
+        ui_state["preferred_times"] = render_toggle_buttons(
+            ["Morning", "Mid-day", "Evening"],
+            ui_state["preferred_times"],
+            "time_toggle",
+        )
+
+        typed_schedule = st.text_input("Or type your answer...", key="typed_schedule_input")
+        if typed_schedule.strip():
+            parsed_days, parsed_times = parse_schedule_text(typed_schedule)
+            if parsed_days:
+                ui_state["preferred_days"] = parsed_days
+            if parsed_times:
+                ui_state["preferred_times"] = parsed_times
+
+        if ui_state["preferred_days"] and ui_state["preferred_times"]:
+            ui_state["screen"] = 4
+            st.rerun()
+        return
+
+    summary = {
+        "name": ui_state["name"],
+        "date_of_birth": ui_state["date_of_birth"],
+        "physiotherapist": ui_state["physiotherapist"],
+        "preferred_days": ui_state["preferred_days"],
+        "preferred_times": ui_state["preferred_times"],
+        "status": "onboarding_complete",
+    }
+    render_patient_bubble(
+        f"Days: {', '.join(ui_state['preferred_days'])} | Times: {', '.join(ui_state['preferred_times'])}"
+    )
+    render_assistant_bubble("Thanks, everything for your appointment is confirmed.")
+    st.code(json.dumps(summary, indent=2), language="json")
+
 # --- API KEY HANDLING ---
 api_key = st.secrets.get("GROQ_API_KEY", st.secrets.get("OPENROUTER_API_KEY", st.secrets.get("OPENAI_API_KEY", "")))
 
@@ -569,9 +780,17 @@ with st.sidebar:
             reset_key = "physio::default"
         if "chat_threads" in st.session_state:
             st.session_state.chat_threads.pop(reset_key, None)
+        st.session_state.pop("onboarding_ui", None)
+        st.session_state.pop("onboarding_identity_input", None)
+        st.session_state.pop("typed_physio_input", None)
+        st.session_state.pop("typed_schedule_input", None)
         st.rerun()
             
 # --- CHAT UI ---
+if app_mode == "Patient (Rehab Support)" and patient_phase == "Conversational Onboarding":
+    render_onboarding_interface()
+    st.stop()
+
 if "chat_threads" not in st.session_state:
     st.session_state.chat_threads = {}
 
