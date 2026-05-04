@@ -788,11 +788,16 @@ def render_onboarding_interface():
 
     if ui_state["screen"] == 2:
         if not (ui_state["name"] and ui_state["date_of_birth"]):
-            identity_text, identity_sent = render_manual_input_row(
+            identity_default = st.session_state.get(
                 "onboarding_identity_input",
-                "send_identity_arrow",
+                "Sarah, 14 March 1990",
             )
-            if identity_sent:
+            identity_text = st.text_input(
+                "Name and date of birth",
+                value=identity_default,
+                key="onboarding_identity_input",
+            )
+            if st.button("Confirm identity", type="primary", use_container_width=True):
                 parsed_name, parsed_dob = parse_identity_input(identity_text)
                 if not parsed_name or not parsed_dob:
                     st.warning("Please include both name and date of birth.")
