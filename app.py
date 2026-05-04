@@ -980,7 +980,7 @@ with st.sidebar:
         st.session_state.pop("typed_physio_input", None)
         st.session_state.pop("typed_schedule_input", None)
         for state_key in list(st.session_state.keys()):
-            if state_key.startswith("checkin_gate_choice::"):
+            if state_key.startswith("checkin_gate_choice::") or state_key.startswith("checkin_reschedule_choice::"):
                 st.session_state.pop(state_key, None)
         st.rerun()
             
@@ -1028,14 +1028,18 @@ st.session_state.messages = st.session_state.chat_threads[thread_key]
 
 if app_mode == "Patient (Rehab Support)" and patient_phase == "Conversational Check-In":
     checkin_gate_key = f"checkin_gate_choice::{thread_key}"
+    checkin_reschedule_key = f"checkin_reschedule_choice::{thread_key}"
     if checkin_gate_key not in st.session_state:
         st.session_state[checkin_gate_key] = None
+    if checkin_reschedule_key not in st.session_state:
+        st.session_state[checkin_reschedule_key] = None
 
     if st.session_state[checkin_gate_key] is None:
         render_assistant_bubble("Would you like to continue with your check-in now or postpone it?")
         continue_col, postpone_col = st.columns(2)
         if continue_col.button("Continue check-in", type="primary", use_container_width=True):
             st.session_state[checkin_gate_key] = "continue"
+            st.session_state[checkin_reschedule_key] = "not_needed"
             st.session_state.messages.append(
                 {
                     "role": "user",
@@ -1054,6 +1058,7 @@ if app_mode == "Patient (Rehab Support)" and patient_phase == "Conversational Ch
 
         if postpone_col.button("Postpone check-in", use_container_width=True):
             st.session_state[checkin_gate_key] = "postpone"
+            st.session_state[checkin_reschedule_key] = None
             st.session_state.messages.append(
                 {
                     "role": "user",
@@ -1083,6 +1088,34 @@ for message in st.session_state.messages[1:]:
     else:
         with st.chat_message(message["role"]):
             st.markdown(message["content"])
+
+if app_mode == "Patient (Rehab Support)" and patient_phase == "Conversational Check-In":
+    checkin_gate_key = f"checkin_gate_choice::{thread_key}"
+    checkin_reschedule_key = f"checkin_reschedule_choice::{thread_key}"
+    if (
+        st.session_state.get(checkin_gate_key) == "postpone"
+        and st.session_state.get(checkin_reschedule_key) is None
+    ):
+        option_cols = st.columns(3)
+        for idx, label in enumerate(["30 minutes", "1 hour", "2 hours"]):
+            if option_cols[idx].button(label, key=f"checkin_reschedule_{thread_key}_{idx}", use_container_width=True):
+                st.session_state[checkin_reschedule_key] = label
+                st.session_state.messages.append(
+                    {
+                        "role": "user",
+                        "content": label,
+                        "ts": datetime.now().isoformat(timespec="seconds"),
+                    }
+                )
+                st.session_state.messages.append(
+                    {
+                        "role": "assistant",
+                        "content": f"Perfect, I will remind you again in {label}.",
+                        "ts": datetime.now().isoformat(timespec="seconds"),
+                    }
+                )
+                st.rerun()
+        st.stop()
 
 # User input
 if prompt := st.chat_input("Type your message here..."):
