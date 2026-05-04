@@ -624,8 +624,17 @@ def apply_patient_theme():
             background-color: #244fbe;
             border-color: #244fbe;
         }
+        .stTextInput div[data-baseweb="input"] {
+            background-color: #F3EDE5 !important;
+            border: 1px solid #1E4CBD !important;
+            border-radius: 12px !important;
+        }
         .stTextInput input {
             background-color: #F3EDE5 !important;
+        }
+        .stTextInput input::placeholder {
+            color: #1E4CBD !important;
+            opacity: 1 !important;
         }
         </style>
         """,
@@ -690,6 +699,19 @@ def render_toggle_buttons(options, selected, key_prefix):
     return updated
 
 
+def render_manual_input_row(input_key, send_key):
+    input_col, send_col = st.columns([8, 1])
+    typed_text = input_col.text_input(
+        "Manual answer",
+        value="",
+        placeholder="Or type your answer...",
+        key=input_key,
+        label_visibility="collapsed",
+    )
+    sent = send_col.button("➜", key=send_key, type="primary", use_container_width=True)
+    return typed_text, sent
+
+
 def render_onboarding_interface():
     ui_state = st.session_state.setdefault(
         "onboarding_ui",
@@ -741,13 +763,11 @@ def render_onboarding_interface():
 
     if ui_state["screen"] == 2:
         if not (ui_state["name"] and ui_state["date_of_birth"]):
-            identity_text = st.text_input(
-                "Or type your answer...",
-                value="",
-                placeholder="Sarah, 14 March 1990",
-                key="onboarding_identity_input",
+            identity_text, identity_sent = render_manual_input_row(
+                "onboarding_identity_input",
+                "send_identity_arrow",
             )
-            if st.button("Confirm identity", type="primary"):
+            if identity_sent:
                 parsed_name, parsed_dob = parse_identity_input(identity_text)
                 if not parsed_name or not parsed_dob:
                     st.warning("Please include both name and date of birth.")
@@ -775,8 +795,11 @@ def render_onboarding_interface():
                     )
                     ui_state["screen"] = 3
                     st.rerun()
-            typed_physio = st.text_input("Or type your answer...", key="typed_physio_input")
-            if st.button("Confirm physiotherapist"):
+            typed_physio, physio_sent = render_manual_input_row(
+                "typed_physio_input",
+                "send_physio_arrow",
+            )
+            if physio_sent:
                 if typed_physio.strip():
                     ui_state["physiotherapist"] = typed_physio.strip()
                     append_onboarding_message("user", ui_state["physiotherapist"])
@@ -804,13 +827,18 @@ def render_onboarding_interface():
             "time_toggle",
         )
 
-        typed_schedule = st.text_input("Or type your answer...", key="typed_schedule_input")
-        if typed_schedule.strip():
+        typed_schedule, schedule_sent = render_manual_input_row(
+            "typed_schedule_input",
+            "send_schedule_arrow",
+        )
+        if schedule_sent and typed_schedule.strip():
             parsed_days, parsed_times = parse_schedule_text(typed_schedule)
             if parsed_days:
                 ui_state["preferred_days"] = parsed_days
             if parsed_times:
                 ui_state["preferred_times"] = parsed_times
+            if not parsed_days and not parsed_times:
+                st.warning("Please include at least a day or a time.")
 
         if ui_state["preferred_days"] and ui_state["preferred_times"]:
             append_onboarding_message(
