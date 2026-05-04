@@ -671,20 +671,20 @@ def parse_schedule_text(raw_text):
         return [], []
     lowered = raw_text.lower()
     day_map = {
-        "monday": "M",
-        "mon": "M",
-        "tuesday": "T",
-        "tue": "T",
-        "wednesday": "W",
-        "wed": "W",
-        "thursday": "Th",
-        "thu": "Th",
-        "friday": "F",
-        "fri": "F",
-        "saturday": "Sa",
-        "sat": "Sa",
-        "sunday": "Su",
-        "sun": "Su",
+        "monday": "Mon",
+        "mon": "Mon",
+        "tuesday": "Tue",
+        "tue": "Tue",
+        "wednesday": "Wed",
+        "wed": "Wed",
+        "thursday": "Thu",
+        "thu": "Thu",
+        "friday": "Fri",
+        "fri": "Fri",
+        "saturday": "Sat",
+        "sat": "Sat",
+        "sunday": "Sun",
+        "sun": "Sun",
     }
     time_map = {
         "morning": "Morning",
@@ -694,7 +694,7 @@ def parse_schedule_text(raw_text):
         "evening": "Evening",
         "night": "Evening",
     }
-    days = sorted({v for k, v in day_map.items() if k in lowered}, key=["M", "T", "W", "Th", "F", "Sa", "Su"].index)
+    days = sorted({v for k, v in day_map.items() if k in lowered}, key=["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].index)
     times = sorted({v for k, v in time_map.items() if k in lowered}, key=["Morning", "Mid-day", "Evening"].index)
     return days, times
 
@@ -765,6 +765,16 @@ def render_onboarding_interface():
                 "ts": datetime.now().isoformat(timespec="seconds"),
             }
         )
+
+    day_full_names = {
+        "Mon": "Monday",
+        "Tue": "Tuesday",
+        "Wed": "Wednesday",
+        "Thu": "Thursday",
+        "Fri": "Friday",
+        "Sat": "Saturday",
+        "Sun": "Sunday",
+    }
 
     # Seed initial assistant message once.
     if not ui_state["messages"]:
@@ -847,7 +857,7 @@ def render_onboarding_interface():
     if ui_state["screen"] == 3:
         st.caption("Preferred days")
         ui_state["preferred_days"] = render_toggle_buttons(
-            ["M", "T", "W", "Th", "F", "Sa", "Su"],
+            ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
             ui_state["preferred_days"],
             "day_toggle",
         )
@@ -894,7 +904,7 @@ def render_onboarding_interface():
           <div><strong>Name:</strong> {html.escape(ui_state["name"])}</div>
           <div><strong>Date of birth:</strong> {html.escape(ui_state["date_of_birth"])}</div>
           <div><strong>Physiotherapist:</strong> {html.escape(ui_state["physiotherapist"])}</div>
-          <div><strong>Preferred days:</strong> {html.escape(", ".join(ui_state["preferred_days"]))}</div>
+          <div><strong>Preferred days:</strong> {html.escape(", ".join(day_full_names.get(day, day) for day in ui_state["preferred_days"]))}</div>
           <div><strong>Preferred time:</strong> {html.escape(", ".join(ui_state["preferred_times"]))}</div>
         </div>
         """,
