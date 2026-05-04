@@ -1,6 +1,7 @@
 import streamlit as st
 import openai
 import html
+import re
 from datetime import datetime
 
 # --- SYSTEM PROMPTS ---
@@ -309,10 +310,10 @@ CHECK-IN STRUCTURE (Q1 -> Q5 -> CLOSE)
 Q1 - ADHERENCE (BRANCHING)
 Goal: Determine how much of the exercise session just completed the patient did.
 1. Ask one short question tied to the session they just finished (e.g. how much they completed in that session).
-2. In the same turn, present exactly three clear answer options the patient can choose from, each as its own button label (one button per option), plus follow DISCRETE ANSWER PRESENTATION: always mention the separate "Other" text field (placeholder "Other") for answers that do not fit the three buttons:
-   - All exercises
-   - Some exercises
-   - None
+2. In the same turn, present exactly three clear answer options the patient can choose from, each as its own button label using the [BUTTON: Label] format, plus follow DISCRETE ANSWER PRESENTATION: always mention the separate "Other" text field (placeholder "Other") for answers that do not fit the three buttons:
+   - [BUTTON: All exercises]
+   - [BUTTON: Some exercises]
+   - [BUTTON: None]
 3. Map their choice to internal adherence:
    - "All exercises" -> full adherence -> continue to Q2 and Q3
    - "Some exercises" -> partial adherence -> continue to Q2 and Q3 (you may briefly ask which parts if useful, then continue)
@@ -384,7 +385,7 @@ GENERAL RULES
 - Do not invent information; only use what the patient provides.
 - If the patient jumps ahead, extract the information and continue the correct step flow.
 - Keep responses concise and focused on the check-in.
-- If the patient wants to postpone the check-in, acknowledge it and ask them to reschedule by offering exactly these options: 30 minutes, 1 hour, or 2 hours.
+- If the patient wants to postpone the check-in, acknowledge it and ask them to reschedule by offering exactly these options: [BUTTON: 30 minutes], [BUTTON: 1 hour], or [BUTTON: 2 hours].
 """,
     "In-Exercise Session": """
 EXPERIENCE PHASE: IN-EXERCISE SESSION
@@ -493,7 +494,8 @@ The active experience phase is provided separately by the app context.
 
 DISCRETE ANSWER PRESENTATION (BUTTONS + OTHER)
 Whenever you present potential answers or expect the user to pick from specific options (multiple choice, suggested replies, branching choices, scales presented as separate picks, etc.):
-- Provide exactly one short label per option, formatted so the interface can show one button per answer (each option on its own line or clearly separated).
+- Provide exactly one short label per option, enclosed in brackets like this: [BUTTON: Option Label].
+- The interface will automatically render these as clickable buttons for the patient.
 - Always include a separate free-text path for custom answers: tell the user they can use the text field labeled "Other" with placeholder text "Other" if their answer does not match any button.
 - Keep button labels concise, scannable, and distinct from each other.
 """
@@ -592,8 +594,22 @@ def format_message_timestamp(ts_value):
     return label
 
 
+def parse_buttons(text):
+    """Extract button labels from text formatted as [BUTTON: Label]"""
+    return re.findall(r"\[BUTTON:\s*(.*?)\]", text, re.IGNORECASE)
+
+
+def clean_button_tags(text):
+    """Remove [BUTTON: Label] tags from text for display"""
+    # First replace [BUTTON: Label] with just Label
+    cleaned = re.sub(r"\[BUTTON:\s*(.*?)\]", r"\1", text, flags=re.IGNORECASE)
+    # Also clean up any double spaces or leading/trailing whitespace around the cleaned labels if needed
+    return cleaned
+
+
 def render_assistant_bubble(text, ts_value=None):
-    safe_text = html.escape(text).replace("\n", "<br>")
+    display_text = clean_button_tags(text)
+    safe_text = html.escape(display_text).replace("\n", "<br>")
     ts_label = format_message_timestamp(ts_value)
     st.markdown(
         f"""
@@ -1037,8 +1053,6 @@ else:
         "ts": st.session_state.chat_threads[thread_key][0].get("ts", datetime.now().isoformat(timespec="seconds")),
     }
 
-st.session_state.messages = st.session_state.chat_threads[thread_key]
-
 if app_mode == "Patient (Rehab Support)" and patient_phase == "Conversational Check-In":
     checkin_gate_key = f"checkin_gate_choice::{thread_key}"
     checkin_reschedule_key = f"checkin_reschedule_choice::{thread_key}"
@@ -1048,46 +1062,16 @@ if app_mode == "Patient (Rehab Support)" and patient_phase == "Conversational Ch
         st.session_state[checkin_reschedule_key] = None
 
     if st.session_state[checkin_gate_key] is None:
-        render_assistant_bubble("Would you like to continue with your check-in now or postpone it?")
-        continue_col, postpone_col = st.columns(2)
-        if continue_col.button("Continue check-in", type="primary", use_container_width=True):
-            st.session_state[checkin_gate_key] = "continue"
-            st.session_state[checkin_reschedule_key] = "not_needed"
-            st.session_state.messages.append(
-                {
-                    "role": "user",
-                    "content": "Continue check-in",
-                    "ts": datetime.now().isoformat(timespec="seconds"),
-                }
-            )
-            st.session_state.messages.append(
-                {
-                    "role": "assistant",
-                    "content": "Great, let's continue the check-in. Thinking about the exercise session you just finished—how much did you complete? You can reply with: All exercises, Some exercises, or None.",
-                    "ts": datetime.now().isoformat(timespec="seconds"),
-                }
-            )
+        gate_text = "Would you like to continue with your check-in now or postpone it? [BUTTON: Continue check-in] [BUTTON: Postpone check-in]"
+        if not st.session_state.chat_threads[thread_key] or st.session_state.chat_threads[thread_key][-1]["content"] != gate_text:
+            st.session_state.chat_threads[thread_key].append({
+                "role": "assistant",
+                "content": gate_text,
+                "ts": datetime.now().isoformat(timespec="seconds")
+            })
             st.rerun()
 
-        if postpone_col.button("Postpone check-in", use_container_width=True):
-            st.session_state[checkin_gate_key] = "postpone"
-            st.session_state[checkin_reschedule_key] = None
-            st.session_state.messages.append(
-                {
-                    "role": "user",
-                    "content": "Postpone check-in",
-                    "ts": datetime.now().isoformat(timespec="seconds"),
-                }
-            )
-            st.session_state.messages.append(
-                {
-                    "role": "assistant",
-                    "content": "No problem. Would you like to reschedule your check-in in 30 minutes, 1 hour, or 2 hours?",
-                    "ts": datetime.now().isoformat(timespec="seconds"),
-                }
-            )
-            st.rerun()
-        st.stop()
+st.session_state.messages = st.session_state.chat_threads[thread_key]
 
 # Display chat messages (excluding the hidden system instructions)
 for message in st.session_state.messages[1:]:
@@ -1109,26 +1093,55 @@ if app_mode == "Patient (Rehab Support)" and patient_phase == "Conversational Ch
         st.session_state.get(checkin_gate_key) == "postpone"
         and st.session_state.get(checkin_reschedule_key) is None
     ):
-        option_cols = st.columns(3)
-        for idx, label in enumerate(["30 minutes", "1 hour", "2 hours"]):
-            if option_cols[idx].button(label, key=f"checkin_reschedule_{thread_key}_{idx}", use_container_width=True):
-                st.session_state[checkin_reschedule_key] = label
-                st.session_state.messages.append(
-                    {
-                        "role": "user",
-                        "content": label,
-                        "ts": datetime.now().isoformat(timespec="seconds"),
-                    }
-                )
-                st.session_state.messages.append(
-                    {
-                        "role": "assistant",
-                        "content": f"Perfect, I will remind you again in {label}.",
-                        "ts": datetime.now().isoformat(timespec="seconds"),
-                    }
-                )
-                st.rerun()
-        st.stop()
+        resched_text = "No problem. Would you like to reschedule your check-in in [BUTTON: 30 minutes], [BUTTON: 1 hour], or [BUTTON: 2 hours]?"
+        if st.session_state.messages[-1]["content"] != resched_text:
+            st.session_state.messages.append({
+                "role": "assistant",
+                "content": resched_text,
+                "ts": datetime.now().isoformat(timespec="seconds")
+            })
+            st.rerun()
+
+# --- DYNAMIC BUTTONS ---
+if app_mode == "Patient (Rehab Support)" and st.session_state.messages:
+    last_msg = st.session_state.messages[-1]
+    if last_msg["role"] == "assistant":
+        buttons = parse_buttons(last_msg["content"])
+        if buttons:
+            st.markdown("<div style='margin-bottom:0.5rem;'></div>", unsafe_allow_html=True)
+            cols = st.columns(len(buttons))
+            for idx, btn_label in enumerate(buttons):
+                if cols[idx].button(btn_label, key=f"chat_btn_{len(st.session_state.messages)}_{idx}", use_container_width=True):
+                    # Simulate user input
+                    user_ts = datetime.now().isoformat(timespec="seconds")
+                    st.session_state.messages.append({"role": "user", "content": btn_label, "ts": user_ts})
+                    
+                    # Special logic for check-in gates
+                    if btn_label == "Continue check-in":
+                        st.session_state[f"checkin_gate_choice::{thread_key}"] = "continue"
+                        st.session_state[f"checkin_reschedule_choice::{thread_key}"] = "not_needed"
+                        st.session_state.messages.append({
+                            "role": "assistant",
+                            "content": "Great, let's continue the check-in. Thinking about the exercise session you just finished—how much did you complete? You can reply with: [BUTTON: All exercises], [BUTTON: Some exercises], or [BUTTON: None].",
+                            "ts": datetime.now().isoformat(timespec="seconds")
+                        })
+                    elif btn_label == "Postpone check-in":
+                        st.session_state[f"checkin_gate_choice::{thread_key}"] = "postpone"
+                        st.session_state[f"checkin_reschedule_choice::{thread_key}"] = None
+                        st.session_state.messages.append({
+                            "role": "assistant",
+                            "content": "No problem. Would you like to reschedule your check-in in [BUTTON: 30 minutes], [BUTTON: 1 hour], or [BUTTON: 2 hours]?",
+                            "ts": datetime.now().isoformat(timespec="seconds")
+                        })
+                    elif btn_label in ["30 minutes", "1 hour", "2 hours"]:
+                        st.session_state[f"checkin_reschedule_choice::{thread_key}"] = btn_label
+                        st.session_state.messages.append({
+                            "role": "assistant",
+                            "content": f"Perfect, I will remind you again in {btn_label}.",
+                            "ts": datetime.now().isoformat(timespec="seconds")
+                        })
+                    
+                    st.rerun()
 
 # User input
 if prompt := st.chat_input("Type your message here..."):
