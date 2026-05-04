@@ -645,6 +645,7 @@ def apply_patient_theme():
         }
         .stTextInput input {
             background-color: #F3EDE5 !important;
+            color: #1E4CBD !important;
         }
         .stTextInput input::placeholder {
             color: #1E4CBD !important;
