@@ -377,6 +377,7 @@ GENERAL RULES
 - Do not invent information; only use what the patient provides.
 - If the patient jumps ahead, extract the information and continue the correct step flow.
 - Keep responses concise and focused on the check-in.
+- If the patient wants to postpone the check-in, acknowledge it and ask them to reschedule by offering exactly these options: 30 minutes, 1 hour, or 2 hours.
 """,
     "In-Exercise Session": """
 EXPERIENCE PHASE: IN-EXERCISE SESSION
@@ -530,8 +531,14 @@ with st.sidebar:
     st.markdown("---")
 
 if app_mode == "Patient (Rehab Support)":
+    patient_titles = {
+        "Conversational Onboarding": "Onboarding for Patients",
+        "Conversational Check-In": "Post-Session Check-in",
+        "In-Exercise Session": "In-Exercise Session",
+    }
+    page_title = patient_titles.get(patient_phase, "Patient Companion")
     st.markdown(
-        "<h1 style='color:#1E4CBD; margin:0;'>Onboarding for Patients</h1>",
+        f"<h1 style='color:#1E4CBD; margin:0;'>{page_title}</h1>",
         unsafe_allow_html=True,
     )
     st.markdown("Your digital physiotherapy rehabilitation support.")
@@ -972,6 +979,9 @@ with st.sidebar:
         st.session_state.pop("onboarding_identity_input", None)
         st.session_state.pop("typed_physio_input", None)
         st.session_state.pop("typed_schedule_input", None)
+        for state_key in list(st.session_state.keys()):
+            if state_key.startswith("checkin_gate_choice::"):
+                st.session_state.pop(state_key, None)
         st.rerun()
             
 # --- CHAT UI ---
@@ -1015,6 +1025,51 @@ else:
     }
 
 st.session_state.messages = st.session_state.chat_threads[thread_key]
+
+if app_mode == "Patient (Rehab Support)" and patient_phase == "Conversational Check-In":
+    checkin_gate_key = f"checkin_gate_choice::{thread_key}"
+    if checkin_gate_key not in st.session_state:
+        st.session_state[checkin_gate_key] = None
+
+    if st.session_state[checkin_gate_key] is None:
+        render_assistant_bubble("Would you like to continue with your check-in now or postpone it?")
+        continue_col, postpone_col = st.columns(2)
+        if continue_col.button("Continue check-in", type="primary", use_container_width=True):
+            st.session_state[checkin_gate_key] = "continue"
+            st.session_state.messages.append(
+                {
+                    "role": "user",
+                    "content": "Continue check-in",
+                    "ts": datetime.now().isoformat(timespec="seconds"),
+                }
+            )
+            st.session_state.messages.append(
+                {
+                    "role": "assistant",
+                    "content": "Great, let's continue the check-in. How did your exercises go since our last session?",
+                    "ts": datetime.now().isoformat(timespec="seconds"),
+                }
+            )
+            st.rerun()
+
+        if postpone_col.button("Postpone check-in", use_container_width=True):
+            st.session_state[checkin_gate_key] = "postpone"
+            st.session_state.messages.append(
+                {
+                    "role": "user",
+                    "content": "Postpone check-in",
+                    "ts": datetime.now().isoformat(timespec="seconds"),
+                }
+            )
+            st.session_state.messages.append(
+                {
+                    "role": "assistant",
+                    "content": "No problem. Would you like to reschedule your check-in in 30 minutes, 1 hour, or 2 hours?",
+                    "ts": datetime.now().isoformat(timespec="seconds"),
+                }
+            )
+            st.rerun()
+        st.stop()
 
 # Display chat messages (excluding the hidden system instructions)
 for message in st.session_state.messages[1:]:
