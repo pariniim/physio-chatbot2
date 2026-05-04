@@ -883,8 +883,8 @@ def render_onboarding_interface():
 
     st.markdown(
         f"""
-        <div style="background:#ffffff; border:1px solid #dbe4ff; border-radius:14px; padding:0.9rem 1rem; margin-top:0.35rem;">
-          <div style="color:#1E4CBD; font-weight:700; margin-bottom:0.45rem;">Summary</div>
+        <div style="background:#ffffff; border:1px solid #dbe4ff; border-radius:14px; padding:0.9rem 1rem; margin-top:0.35rem; color:#1D2440;">
+          <div style="color:#1D2440; font-weight:700; margin-bottom:0.45rem;">Summary</div>
           <div><strong>Name:</strong> {html.escape(ui_state["name"])}</div>
           <div><strong>Date of birth:</strong> {html.escape(ui_state["date_of_birth"])}</div>
           <div><strong>Physiotherapist:</strong> {html.escape(ui_state["physiotherapist"])}</div>
