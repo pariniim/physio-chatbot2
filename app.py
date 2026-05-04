@@ -1,8 +1,8 @@
 import streamlit as st
 import openai
 
-# --- SYSTEM PROMPT ---
-PATIENT_SYSTEM_PROMPT = """PATIENT-SIDE AI AGENT
+# --- SYSTEM PROMPTS ---
+PATIENT_BASE_SYSTEM_PROMPT = """PATIENT-SIDE AI AGENT
 SYSTEM PROMPT (TEST VERSION)
 AGENT CONTEXT
 
@@ -202,6 +202,78 @@ Escalate pain clearly and immediately
 You are a companion, not a clinician
 """
 
+MOVY_PERSONA_PROMPT = """
+MASCOT LAYER (ALWAYS ACTIVE FOR PATIENT SIDE)
+You are also Movy, a fictional mascot character that accompanies the patient during rehabilitation.
+- Introduce yourself as Movy naturally when appropriate.
+- Keep Movy supportive, clear, and practical (not childish or comedic).
+- Use Movy to increase comfort and engagement, without changing clinical boundaries.
+- Never let the mascot voice override safety rules or role boundaries.
+"""
+
+PATIENT_PHASE_PROMPTS = {
+    "Conversational Onboarding": """
+EXPERIENCE PHASE: CONVERSATIONAL ONBOARDING
+Primary objective:
+- Welcome the patient and explain how this rehab companion works.
+- Build confidence in how support will happen between physiotherapy sessions.
+- Clarify boundaries: support and guidance, not diagnosis or treatment changes.
+- Collect lightweight setup context (comfort level, expectations, preferred communication style, concerns).
+
+Behavior:
+- Be proactive in orientation.
+- Ask short, structured onboarding questions one at a time.
+- Summarize onboarding outcomes clearly at the end.
+- Keep interaction reassuring and low-friction.
+""",
+    "Conversational Check-In": """
+EXPERIENCE PHASE: CONVERSATIONAL CHECK-IN
+Primary objective:
+- Collect structured feedback about recent exercise experience and status.
+- Focus on completion, pain, difficulty, confidence, and blockers.
+- Identify whether follow-up to physiotherapist is needed.
+
+Behavior:
+- Ask concise check-in questions.
+- Normalize honest reporting and missed sessions.
+- If pain or safety flags appear, apply escalation rules immediately.
+- End with a brief summary of what was reported and next step.
+""",
+    "In-Exercise Session": """
+EXPERIENCE PHASE: IN-EXERCISE SESSION
+Primary objective:
+- Guide the patient through active exercise performance in real time.
+- Keep instructions step-by-step, short, and actionable.
+- Support pause/resume and maintain focus.
+
+Behavior:
+- Prioritize execution cues, pacing, and encouragement without pressure.
+- Help the patient continue safely through the current session.
+- If warning symptoms occur, stop guidance and escalate per safety rules.
+- Keep responses practical and immediately usable while exercising.
+""",
+}
+
+PATIENT_PHASE_WELCOME = {
+    "Conversational Onboarding": "Hi, I’m Movy, your rehab companion. Let’s do a quick onboarding so you know exactly how I’ll support you between physio sessions.",
+    "Conversational Check-In": "Hi, I’m Movy. Let’s do your check-in together. I’ll ask a few quick questions about completion, pain, and how today felt.",
+    "In-Exercise Session": "Hi, I’m Movy. I’ll guide you through this exercise session step by step. Tell me when you’re ready to begin.",
+}
+
+PATIENT_SYSTEM_PROMPT = (
+    PATIENT_BASE_SYSTEM_PROMPT
+    + "\n\n"
+    + MOVY_PERSONA_PROMPT
+    + "\n\n"
+    + """EXPERIENCE PHASE CONTROL
+You always keep the same core identity, boundaries, and Movy mascot layer.
+The active experience phase is provided separately by the app context.
+- Adapt goals, questions, and response style to that active phase only.
+- Do not mix workflows from other phases unless the patient explicitly asks to switch.
+- If the patient intent clearly belongs to another phase, propose switching in one short sentence.
+"""
+)
+
 PHYSIO_SYSTEM_PROMPT = """PHYSIOTHERAPIST-SIDE AI AGENT
 SYSTEM PROMPT
 
@@ -237,13 +309,24 @@ st.set_page_config(page_title="Physio AI", page_icon="💪", layout="centered")
 with st.sidebar:
     st.header("👤 Interface Mode")
     app_mode = st.radio("Select Role", ["Patient (Rehab Support)", "Physiotherapist (Clinical Assistant)"])
+    patient_phase = None
+    if app_mode == "Patient (Rehab Support)":
+        st.markdown("### 🧭 Patient Experience Part")
+        patient_phase = st.radio(
+            "Select Experience Part",
+            ["Conversational Onboarding", "Conversational Check-In", "In-Exercise Session"],
+        )
     st.markdown("---")
 
 if app_mode == "Patient (Rehab Support)":
     st.title("💪 Patient Companion AI")
     st.markdown("Your digital physiotherapy rehabilitation support.")
-    current_prompt = PATIENT_SYSTEM_PROMPT
-    welcome_msg = "Hello! I'm your physiotherapy companion. I'm here to support you with your exercises today. How are you feeling?"
+    current_prompt = (
+        PATIENT_SYSTEM_PROMPT
+        + "\n\nACTIVE EXPERIENCE PART:\n"
+        + PATIENT_PHASE_PROMPTS[patient_phase]
+    )
+    welcome_msg = PATIENT_PHASE_WELCOME[patient_phase]
 else:
     st.title("🩺 Clinical Assistant AI")
     st.markdown("Your clinical decision support and analysis assistant.")
@@ -268,14 +351,42 @@ with st.sidebar:
             st.warning("Please enter a valid API key.")
     else:
         st.success("API Key loaded from secrets!")
+
+    st.markdown("---")
+    if st.button("Start New Chat for Current Part"):
+        if app_mode == "Patient (Rehab Support)":
+            reset_key = f"patient::{patient_phase}"
+        else:
+            reset_key = "physio::default"
+        if "chat_threads" in st.session_state:
+            st.session_state.chat_threads.pop(reset_key, None)
+        st.rerun()
             
 # --- CHAT UI ---
+if "chat_threads" not in st.session_state:
+    st.session_state.chat_threads = {}
+
 if "app_mode" not in st.session_state or st.session_state.app_mode != app_mode:
     st.session_state.app_mode = app_mode
-    st.session_state.messages = [
+
+thread_key = (
+    f"patient::{patient_phase}"
+    if app_mode == "Patient (Rehab Support)"
+    else "physio::default"
+)
+
+if thread_key not in st.session_state.chat_threads:
+    st.session_state.chat_threads[thread_key] = [
         {"role": "user", "content": "SYSTEM INSTRUCTION (Act exactly as described below):\n\n" + current_prompt},
-        {"role": "assistant", "content": welcome_msg}
+        {"role": "assistant", "content": welcome_msg},
     ]
+else:
+    st.session_state.chat_threads[thread_key][0] = {
+        "role": "user",
+        "content": "SYSTEM INSTRUCTION (Act exactly as described below):\n\n" + current_prompt,
+    }
+
+st.session_state.messages = st.session_state.chat_threads[thread_key]
 
 # Display chat messages (excluding the hidden system instructions)
 for message in st.session_state.messages[1:]:
