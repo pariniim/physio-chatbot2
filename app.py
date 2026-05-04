@@ -624,6 +624,9 @@ def apply_patient_theme():
             background-color: #244fbe;
             border-color: #244fbe;
         }
+        .stTextInput input {
+            background-color: #F3EDE5 !important;
+        }
         </style>
         """,
         unsafe_allow_html=True,
@@ -739,7 +742,7 @@ def render_onboarding_interface():
     if ui_state["screen"] == 2:
         if not (ui_state["name"] and ui_state["date_of_birth"]):
             identity_text = st.text_input(
-                "Name and date of birth",
+                "Or type your answer...",
                 value="",
                 placeholder="Sarah, 14 March 1990",
                 key="onboarding_identity_input",
