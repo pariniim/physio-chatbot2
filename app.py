@@ -1,6 +1,7 @@
 import streamlit as st
 import openai
 import json
+import html
 
 # --- SYSTEM PROMPTS ---
 PATIENT_BASE_SYSTEM_PROMPT = """PATIENT-SIDE AI AGENT
@@ -545,13 +546,14 @@ else:
 
 
 def render_assistant_bubble(text):
+    safe_text = html.escape(text).replace("\n", "<br>")
     st.markdown(
         f"""
         <div style="display:flex; justify-content:flex-start; margin:0.35rem 0;">
-          <div style="max-width:82%; background:#ffffff; color:#111827; padding:0.7rem 0.85rem;
+          <div style="max-width:82%; background:#C4603A; color:#ffffff; padding:0.7rem 0.85rem;
                       border-radius:18px 18px 18px 6px; box-shadow:0 2px 8px rgba(15,23,42,0.10);
-                      border:1px solid #e5e7eb;">
-            {text}
+                      border:1px solid #b4532c;">
+            {safe_text}
           </div>
         </div>
         """,
@@ -560,14 +562,39 @@ def render_assistant_bubble(text):
 
 
 def render_patient_bubble(text):
+    safe_text = html.escape(text).replace("\n", "<br>")
     st.markdown(
         f"""
         <div style="display:flex; justify-content:flex-end; margin:0.35rem 0;">
-          <div style="max-width:82%; background:#2563eb; color:#ffffff; padding:0.7rem 0.85rem;
+          <div style="max-width:82%; background:#2B5CD9; color:#ffffff; padding:0.7rem 0.85rem;
                       border-radius:18px 18px 6px 18px; box-shadow:0 2px 8px rgba(15,23,42,0.15);">
-            {text}
+            {safe_text}
           </div>
         </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+def apply_patient_theme():
+    st.markdown(
+        """
+        <style>
+        .stApp {
+            background-color: #FDFCFA;
+        }
+        .stButton > button[kind="primary"] {
+            background-color: #2B5CD9;
+            border-color: #2B5CD9;
+            color: #ffffff;
+            border-radius: 999px;
+            font-weight: 700;
+        }
+        .stButton > button[kind="primary"]:hover {
+            background-color: #244fbe;
+            border-color: #244fbe;
+        }
+        </style>
         """,
         unsafe_allow_html=True,
     )
@@ -774,6 +801,9 @@ with st.sidebar:
         st.rerun()
             
 # --- CHAT UI ---
+if app_mode == "Patient (Rehab Support)":
+    apply_patient_theme()
+
 if app_mode == "Patient (Rehab Support)" and patient_phase == "Conversational Onboarding":
     render_onboarding_interface()
     st.stop()
@@ -805,8 +835,14 @@ st.session_state.messages = st.session_state.chat_threads[thread_key]
 
 # Display chat messages (excluding the hidden system instructions)
 for message in st.session_state.messages[1:]:
-    with st.chat_message(message["role"]):
-        st.markdown(message["content"])
+    if app_mode == "Patient (Rehab Support)":
+        if message["role"] == "assistant":
+            render_assistant_bubble(message["content"])
+        else:
+            render_patient_bubble(message["content"])
+    else:
+        with st.chat_message(message["role"]):
+            st.markdown(message["content"])
 
 # User input
 if prompt := st.chat_input("Type your message here..."):
@@ -816,20 +852,22 @@ if prompt := st.chat_input("Type your message here..."):
         
     # Append user message
     st.session_state.messages.append({"role": "user", "content": prompt})
-    with st.chat_message("user"):
-        st.markdown(prompt)
+    if app_mode == "Patient (Rehab Support)":
+        render_patient_bubble(prompt)
+    else:
+        with st.chat_message("user"):
+            st.markdown(prompt)
 
     # Generate assistant response
-    with st.chat_message("assistant"):
+    if app_mode == "Patient (Rehab Support)":
         message_placeholder = st.empty()
         full_response = ""
-        
+
         try:
             client = openai.OpenAI(
                 api_key=api_key,
                 base_url="https://api.groq.com/openai/v1",
             )
-            # Using Groq's lightning fast Llama 3.3 70B model
             responses = client.chat.completions.create(
                 model="llama-3.3-70b-versatile",
                 messages=[
@@ -841,10 +879,51 @@ if prompt := st.chat_input("Type your message here..."):
             for chunk in responses:
                 if chunk.choices[0].delta.content is not None:
                     full_response += chunk.choices[0].delta.content
-                    message_placeholder.markdown(full_response + "▌")
-            message_placeholder.markdown(full_response)
+                    safe_stream = html.escape(full_response + "▌").replace("\n", "<br>")
+                    message_placeholder.markdown(
+                        f"""
+                        <div style="display:flex; justify-content:flex-start; margin:0.35rem 0;">
+                          <div style="max-width:82%; background:#C4603A; color:#ffffff; padding:0.7rem 0.85rem;
+                                      border-radius:18px 18px 18px 6px; box-shadow:0 2px 8px rgba(15,23,42,0.10);
+                                      border:1px solid #b4532c;">
+                            {safe_stream}
+                          </div>
+                        </div>
+                        """,
+                        unsafe_allow_html=True,
+                    )
+            message_placeholder.empty()
+            render_assistant_bubble(full_response)
         except Exception as e:
             st.error(f"An error occurred: {e}")
             full_response = "I encountered an error connecting to my brain. Please check your API key."
-            
+            render_assistant_bubble(full_response)
         st.session_state.messages.append({"role": "assistant", "content": full_response})
+    else:
+        with st.chat_message("assistant"):
+            message_placeholder = st.empty()
+            full_response = ""
+
+            try:
+                client = openai.OpenAI(
+                    api_key=api_key,
+                    base_url="https://api.groq.com/openai/v1",
+                )
+                # Using Groq's lightning fast Llama 3.3 70B model
+                responses = client.chat.completions.create(
+                    model="llama-3.3-70b-versatile",
+                    messages=[
+                        {"role": m["role"], "content": m["content"]}
+                        for m in st.session_state.messages
+                    ],
+                    stream=True,
+                )
+                for chunk in responses:
+                    if chunk.choices[0].delta.content is not None:
+                        full_response += chunk.choices[0].delta.content
+                        message_placeholder.markdown(full_response + "▌")
+                message_placeholder.markdown(full_response)
+            except Exception as e:
+                st.error(f"An error occurred: {e}")
+                full_response = "I encountered an error connecting to my brain. Please check your API key."
+            st.session_state.messages.append({"role": "assistant", "content": full_response})
