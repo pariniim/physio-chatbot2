@@ -303,88 +303,64 @@ Never give medical advice.
 
 SESSION CONTEXT (MANDATORY)
 - This check-in is a post-session check-in: always frame questions around the exercise session the patient has just completed (not a generic "since last time" unless they bring it up).
-- Use wording like "this session," "the exercises you just did," or "right after your session" so the patient knows you mean the session that just occurred.
+- Use wording like "this session," "the exercises you just did," or "right after your session."
 
-CHECK-IN STRUCTURE (Q1 -> Q5 -> CLOSE)
+CHECK-IN STRUCTURE
 
-Q1 - ADHERENCE (BRANCHING)
-Goal: Determine how much of the exercise session just completed the patient did.
-1. Ask one short question tied to the session they just finished (e.g. how much they completed in that session).
-2. In the same turn, present exactly three clear answer options the patient can choose from, each as its own button label using the [BUTTON: Label] format, plus follow DISCRETE ANSWER PRESENTATION: always mention the separate "Other" text field (placeholder "Other") for answers that do not fit the three buttons:
-   - [BUTTON: All exercises]
-   - [BUTTON: Some exercises]
-   - [BUTTON: None]
-3. Map their choice to internal adherence:
-   - "All exercises" -> full adherence -> continue to Q2 and Q3
-   - "Some exercises" -> partial adherence -> continue to Q2 and Q3 (you may briefly ask which parts if useful, then continue)
-   - "None" -> zero adherence -> branch: acknowledge without judgment, skip Q2 and Q3, go directly to Q4
-4. If the patient answers in free text, interpret it into one of the three branches above; if unclear, ask a clarifying question and offer the three options again.
-5. Branching rules:
-   - All or Some: follow Q2, then Q3, then Q4, Q5, CLOSE
-   - None: skip Q2 and Q3, then Q4, Q5, CLOSE
+Q1 - ADHERENCE & SKIPPED EXERCISES
+1. Ask how much of the session was completed: [BUTTON: All exercises], [BUTTON: Some exercises], [BUTTON: None].
+2. If "Some exercises":
+   - Ask which exercises were skipped (Exercise 1, Exercise 2, Exercise 3, Exercise 4, Exercise 5). Present them as buttons: [BUTTON: Exercise 1], [BUTTON: Exercise 2], [BUTTON: Exercise 3], [BUTTON: Exercise 4], [BUTTON: Exercise 5].
+   - For each skipped exercise, ask WHY it was skipped. Provide exactly 5 reason buttons: [BUTTON: Lack of time], [BUTTON: Too much pain], [BUTTON: Too difficult], [BUTTON: Forgot how to do it], [BUTTON: Other].
+3. If "None":
+   - Ask WHY the entire session was skipped. Provide the same 5 reason buttons: [BUTTON: Lack of time], [BUTTON: Too much pain], [BUTTON: Too difficult], [BUTTON: Forgot how to do it], [BUTTON: Other].
+   - Log "Session skipped" in the status.
+4. Map responses to internal fields.
 
-Q2 - CONFIDENCE
-(Only if adherence > 0)
-Goal: Understand confidence in performing the exercises.
-1. Ask: "How confident did you feel doing the exercises?"
-2. Accept free text or numeric confidence levels.
-3. Interpret confidence as:
-   - low
-   - medium
-   - high
-4. If unclear, ask a clarifying question.
+Q2 - PAIN INTENSITY (MANDATORY)
+1. Ask: "Did you feel any discomfort or pain during or after the session?"
+2. Present a 0-10 intensity scale using the tag: [SLIDER: Pain Level, 0, 10].
+3. SAFETY RULE: If the user selects 8 or above, you must immediately flag this with a warning: "⚠ This is a high level of pain. Please stop any further activity and I will flag this for your physiotherapist immediately."
 
-Q3 - DIFFICULTY
-(Only if adherence > 0)
-Goal: Understand perceived difficulty.
-1. Ask: "How difficult did the exercises feel?"
-2. Accept free text or numeric difficulty levels.
-3. Interpret difficulty as:
-   - easy
-   - moderate
-   - hard
-4. If unclear, ask a clarifying question.
+Q3 - PAIN DETAILS (If Pain > 0)
+1. Ask: "Which exercises created pain or discomfort?" (List the exercises as buttons: [BUTTON: Exercise 1], [BUTTON: Exercise 2], etc. or [BUTTON: All of them]).
+2. Ask: "Where exactly did you feel this sensation?"
+3. Use the tag [BODYMAP] to show the interactive body map for location selection.
+4. Ask: "How would you describe the pain?" Provide 5 reason chips: [BUTTON: Sharp], [BUTTON: Dull/Achey], [BUTTON: Burning], [BUTTON: Tingling], [BUTTON: Throbbing].
+5. Ask: "Is the pain still there now?" Provide 3 chips: [BUTTON: Yes, still strong], [BUTTON: Yes, but fading], [BUTTON: No, it stopped].
 
-Q4 - EXPERIENCE / FEEDBACK
-Goal: Capture the patient's subjective experience.
-1. Ask: "How has your body been feeling overall?"
-2. Extract:
-   - pain changes
-   - mobility changes
-   - fatigue
-   - emotional tone
-3. Keep interpretation neutral and non-clinical.
+Q4 - CONFIDENCE & DIFFICULTY (Only if adherence > 0)
+1. Ask: "How confident did you feel doing the exercises?" Provide chips: [BUTTON: Low], [BUTTON: Medium], [BUTTON: High].
+2. Ask: "How difficult did the exercises feel?" Provide chips: [BUTTON: Easy], [BUTTON: Moderate], [BUTTON: Hard].
 
 Q5 - OPEN REFLECTION
-Goal: Allow the patient to share anything else relevant.
 1. Ask: "Is there anything else you'd like to share about your exercises or how you're feeling?"
-2. Accept free text.
-3. Extract any additional insights.
 
 CLOSE - SUMMARY + ENCOURAGEMENT
-Goal: Provide a supportive closing and generate a structured summary.
 1. Thank the patient.
-2. Briefly reflect their key points back to them.
-3. Provide neutral encouragement (no medical advice).
-4. Output the final structured JSON summary.
+2. Output the final structured JSON summary.
 
 FINAL OUTPUT FORMAT
 Return the final summary in this JSON structure:
 {
   "adherence": "...",
+  "skipped_exercises": [{"exercise": "...", "reason": "..."}],
+  "pain_level": 0-10,
+  "pain_flag": "normal/high",
+  "pain_exercises": ["..."],
+  "pain_location": ["..."],
+  "pain_description": "...",
+  "pain_persistent": "...",
   "confidence": "...",
   "difficulty": "...",
-  "overall_experience": "...",
   "additional_notes": "...",
   "status": "Check-in completed"
 }
 
 GENERAL RULES
 - Never provide medical advice.
-- Keep tone supportive and non-judgmental.
-- Do not invent information; only use what the patient provides.
-- If the patient jumps ahead, extract the information and continue the correct step flow.
-- Keep responses concise and focused on the check-in.
+- If pain is 8+, prioritize safety.
+- Use [BUTTON: Label], [SLIDER: Label, Min, Max], and [BODYMAP] tags correctly.
 - If the patient wants to postpone the check-in, acknowledge it and ask them to reschedule by offering exactly these options: [BUTTON: 30 minutes], [BUTTON: 1 hour], or [BUTTON: 2 hours].
 """,
     "In-Exercise Session": """
@@ -492,12 +468,12 @@ The active experience phase is provided separately by the app context.
 - Do not mix workflows from other phases unless the patient explicitly asks to switch.
 - If the patient intent clearly belongs to another phase, propose switching in one short sentence.
 
-DISCRETE ANSWER PRESENTATION (BUTTONS + OTHER)
-Whenever you present potential answers or expect the user to pick from specific options (multiple choice, suggested replies, branching choices, scales presented as separate picks, etc.):
-- Provide exactly one short label per option, enclosed in brackets like this: [BUTTON: Option Label].
-- The interface will automatically render these as clickable buttons for the patient.
-- Always include a separate free-text path for custom answers: tell the user they can use the text field labeled "Other" with placeholder text "Other" if their answer does not match any button.
-- Keep button labels concise, scannable, and distinct from each other.
+494: DISCRETE ANSWER PRESENTATION (BUTTONS, SLIDERS, MAPS)
+495: Whenever you present potential answers or expect the user to pick from specific options:
+496: - **Buttons**: Use [BUTTON: Option Label].
+497: - **Pain Scale**: Use [SLIDER: Pain Level, 0, 10]. This will show a 0-10 slider.
+498: - **Pain Location**: Use [BODYMAP]. This will show an interactive body map for location selection.
+499: - Always include a separate free-text path for custom answers: tell the user they can use the text field labeled "Other" with placeholder text "Other" if their answer does not match any button.
 """
 )
 
@@ -599,16 +575,26 @@ def parse_buttons(text):
     return re.findall(r"\[BUTTON:\s*(.*?)\]", text, re.IGNORECASE)
 
 
-def clean_button_tags(text):
-    """Remove [BUTTON: Label] tags from text for display"""
-    # First replace [BUTTON: Label] with just Label
+def parse_slider(text):
+    """Extract slider details from text formatted as [SLIDER: Label, Min, Max]"""
+    match = re.search(r"\[SLIDER:\s*(.*?),\s*(\d+),\s*(\d+)\]", text, re.IGNORECASE)
+    if match:
+        return match.group(1), int(match.group(2)), int(match.group(3))
+    return None
+
+
+def clean_ui_tags(text):
+    """Remove [BUTTON: ...], [SLIDER: ...], and [BODYMAP] tags from text for display"""
     cleaned = re.sub(r"\[BUTTON:\s*(.*?)\]", r"\1", text, flags=re.IGNORECASE)
-    # Also clean up any double spaces or leading/trailing whitespace around the cleaned labels if needed
+    cleaned = re.sub(r"\[SLIDER:\s*(.*?),\s*(\d+),\s*(\d+)\]", r"", cleaned, flags=re.IGNORECASE)
+    cleaned = re.sub(r"\[BODYMAP\]", r"", cleaned, flags=re.IGNORECASE)
+    # Clean up multiple spaces and newlines left behind
+    cleaned = re.sub(r"\n\s*\n", "\n", cleaned).strip()
     return cleaned
 
 
 def render_assistant_bubble(text, ts_value=None):
-    display_text = clean_button_tags(text)
+    display_text = clean_ui_tags(text)
     safe_text = html.escape(display_text).replace("\n", "<br>")
     ts_label = format_message_timestamp(ts_value)
     st.markdown(
@@ -1102,46 +1088,81 @@ if app_mode == "Patient (Rehab Support)" and patient_phase == "Conversational Ch
             })
             st.rerun()
 
-# --- DYNAMIC BUTTONS ---
+# --- DYNAMIC UI (Buttons, Sliders, Body Map) ---
 if app_mode == "Patient (Rehab Support)" and st.session_state.messages:
     last_msg = st.session_state.messages[-1]
     if last_msg["role"] == "assistant":
+        # Handle Slider
+        slider_data = parse_slider(last_msg["content"])
+        if slider_data:
+            label, vmin, vmax = slider_data
+            st.markdown(f"<div style='margin-bottom:1rem; padding:1rem; background:#F3EDE5; border-radius:12px; border:1px solid #1E4CBD;'>", unsafe_allow_html=True)
+            val = st.slider(label, vmin, vmax, value=0, key=f"chat_slider_{len(st.session_state.messages)}")
+            if st.button("Confirm " + label, type="primary", use_container_width=True):
+                user_ts = datetime.now().isoformat(timespec="seconds")
+                st.session_state.messages.append({"role": "user", "content": f"{label}: {val}", "ts": user_ts})
+                if label.lower() == "pain level" and val >= 8:
+                    st.session_state.messages.append({
+                        "role": "assistant",
+                        "content": "⚠ This is a high level of pain. Please stop any further activity and I will flag this for your physiotherapist immediately. [BUTTON: Understood]",
+                        "ts": datetime.now().isoformat(timespec="seconds")
+                    })
+                st.rerun()
+            st.markdown("</div>", unsafe_allow_html=True)
+
+        # Handle Body Map
+        if "[BODYMAP]" in last_msg["content"].upper():
+            st.markdown("""
+                <div style='background:#ffffff; border:1px solid #2B5CD9; border-radius:18px; padding:1.5rem; margin:1rem 0; text-align:center;'>
+                    <h4 style='color:#1E4CBD; margin-top:0;'>Select Pain Location</h4>
+                    <p style='font-size:0.9rem; color:#475569;'>Tap the areas where you felt discomfort.</p>
+                </div>
+            """, unsafe_allow_html=True)
+            
+            # Stylized Grid for Body Parts
+            regions = [
+                ["Neck", "Upper Back", "Shoulders"],
+                ["Lower Back", "Chest", "Abdomen"],
+                ["Hip (L)", "Hip (R)", "Pelvis"],
+                ["Knee (L)", "Knee (R)", "Ankle (L)", "Ankle (R)"]
+            ]
+            
+            for row in regions:
+                cols = st.columns(len(row))
+                for idx, part in enumerate(row):
+                    if cols[idx].button(part, key=f"body_part_{part}_{len(st.session_state.messages)}", use_container_width=True):
+                        user_ts = datetime.now().isoformat(timespec="seconds")
+                        st.session_state.messages.append({"role": "user", "content": f"Location: {part}", "ts": user_ts})
+                        st.rerun()
+
+        # Handle Buttons
         buttons = parse_buttons(last_msg["content"])
         if buttons:
             st.markdown("<div style='margin-bottom:0.5rem;'></div>", unsafe_allow_html=True)
-            cols = st.columns(len(buttons))
-            for idx, btn_label in enumerate(buttons):
-                if cols[idx].button(btn_label, key=f"chat_btn_{len(st.session_state.messages)}_{idx}", use_container_width=True):
-                    # Simulate user input
-                    user_ts = datetime.now().isoformat(timespec="seconds")
-                    st.session_state.messages.append({"role": "user", "content": btn_label, "ts": user_ts})
-                    
-                    # Special logic for check-in gates
-                    if btn_label == "Continue check-in":
-                        st.session_state[f"checkin_gate_choice::{thread_key}"] = "continue"
-                        st.session_state[f"checkin_reschedule_choice::{thread_key}"] = "not_needed"
-                        st.session_state.messages.append({
-                            "role": "assistant",
-                            "content": "Great, let's continue the check-in. Thinking about the exercise session you just finished—how much did you complete? You can reply with: [BUTTON: All exercises], [BUTTON: Some exercises], or [BUTTON: None].",
-                            "ts": datetime.now().isoformat(timespec="seconds")
-                        })
-                    elif btn_label == "Postpone check-in":
-                        st.session_state[f"checkin_gate_choice::{thread_key}"] = "postpone"
-                        st.session_state[f"checkin_reschedule_choice::{thread_key}"] = None
-                        st.session_state.messages.append({
-                            "role": "assistant",
-                            "content": "No problem. Would you like to reschedule your check-in in [BUTTON: 30 minutes], [BUTTON: 1 hour], or [BUTTON: 2 hours]?",
-                            "ts": datetime.now().isoformat(timespec="seconds")
-                        })
-                    elif btn_label in ["30 minutes", "1 hour", "2 hours"]:
-                        st.session_state[f"checkin_reschedule_choice::{thread_key}"] = btn_label
-                        st.session_state.messages.append({
-                            "role": "assistant",
-                            "content": f"Perfect, I will remind you again in {btn_label}.",
-                            "ts": datetime.now().isoformat(timespec="seconds")
-                        })
-                    
-                    st.rerun()
+            # Group buttons in rows of 3 for better layout
+            for i in range(0, len(buttons), 3):
+                row_btns = buttons[i:i+3]
+                cols = st.columns(len(row_btns))
+                for idx, btn_label in enumerate(row_btns):
+                    if cols[idx].button(btn_label, key=f"chat_btn_{len(st.session_state.messages)}_{i+idx}", use_container_width=True):
+                        # Simulate user input
+                        user_ts = datetime.now().isoformat(timespec="seconds")
+                        st.session_state.messages.append({"role": "user", "content": btn_label, "ts": user_ts})
+                        
+                        # Special logic for check-in gates
+                        if btn_label == "Continue check-in":
+                            st.session_state[f"checkin_gate_choice::{thread_key}"] = "continue"
+                            st.session_state[f"checkin_reschedule_choice::{thread_key}"] = "not_needed"
+                            st.session_state.messages.append({
+                                "role": "assistant",
+                                "content": "Great, let's continue the check-in. Thinking about the exercise session you just finished—how much did you complete? [BUTTON: All exercises], [BUTTON: Some exercises], or [BUTTON: None].",
+                                "ts": datetime.now().isoformat(timespec="seconds")
+                            })
+                        elif btn_label == "Postpone check-in":
+                            st.session_state[f"checkin_gate_choice::{thread_key}"] = "postpone"
+                            st.session_state[f"checkin_reschedule_choice::{thread_key}"] = None
+                        
+                        st.rerun()
 
 # User input
 if prompt := st.chat_input("Type your message here..."):
