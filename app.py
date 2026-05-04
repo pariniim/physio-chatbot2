@@ -1165,19 +1165,21 @@ if app_mode == "Patient (Rehab Support)" and st.session_state.messages:
                         st.rerun()
 
 # User input
+# User input
 if prompt := st.chat_input("Type your message here..."):
     if not api_key:
         st.info("Please enter your API key in the sidebar to continue.")
         st.stop()
         
-    # Append user message
     user_ts = datetime.now().isoformat(timespec="seconds")
     st.session_state.messages.append({"role": "user", "content": prompt, "ts": user_ts})
-    if app_mode == "Patient (Rehab Support)":
-        render_patient_bubble(prompt, user_ts)
-    else:
-        with st.chat_message("user"):
-            st.markdown(prompt)
+    st.rerun()
+
+# --- ASSISTANT RESPONSE GENERATION ---
+if st.session_state.messages and st.session_state.messages[-1]["role"] == "user":
+    if not api_key:
+        st.info("Please enter your API key in the sidebar to continue.")
+        st.stop()
 
     # Generate assistant response
     if app_mode == "Patient (Rehab Support)":
@@ -1222,6 +1224,7 @@ if prompt := st.chat_input("Type your message here..."):
             assistant_ts = datetime.now().isoformat(timespec="seconds")
             render_assistant_bubble(full_response, assistant_ts)
         st.session_state.messages.append({"role": "assistant", "content": full_response, "ts": assistant_ts})
+        st.rerun()
     else:
         with st.chat_message("assistant"):
             message_placeholder = st.empty()
@@ -1250,3 +1253,4 @@ if prompt := st.chat_input("Type your message here..."):
                 st.error(f"An error occurred: {e}")
                 full_response = "I encountered an error connecting to my brain. Please check your API key."
             st.session_state.messages.append({"role": "assistant", "content": full_response})
+            st.rerun()
