@@ -566,8 +566,9 @@ def render_patient_bubble(text):
     st.markdown(
         f"""
         <div style="display:flex; justify-content:flex-end; margin:0.35rem 0;">
-          <div style="max-width:82%; background:#2B5CD9; color:#ffffff; padding:0.7rem 0.85rem;
-                      border-radius:18px 18px 6px 18px; box-shadow:0 2px 8px rgba(15,23,42,0.15);">
+          <div style="max-width:82%; background:#FDFCFA; color:#0f172a; padding:0.7rem 0.85rem;
+                      border-radius:18px 18px 6px 18px; box-shadow:0 2px 8px rgba(15,23,42,0.12);
+                      border:1px solid #2B5CD9;">
             {safe_text}
           </div>
         </div>
