@@ -310,10 +310,11 @@ CHECK-IN STRUCTURE
 Q1 - ADHERENCE & SKIPPED EXERCISES
 1. Ask how much of the session was completed: [BUTTON: All exercises], [BUTTON: Some exercises], [BUTTON: None].
 2. If "Some exercises":
-   - Ask which exercises were skipped (Exercise 1, Exercise 2, Exercise 3, Exercise 4, Exercise 5). Present them as buttons: [BUTTON: Exercise 1], [BUTTON: Exercise 2], [BUTTON: Exercise 3], [BUTTON: Exercise 4], [BUTTON: Exercise 5].
-   - For each skipped exercise, ask WHY it was skipped. Provide exactly 5 reason buttons: [BUTTON: Lack of time], [BUTTON: Too much pain], [BUTTON: Too difficult], [BUTTON: Forgot how to do it], [BUTTON: Other].
+   - Ask which exercises were skipped. Use the multi-select format: [MULTI-SELECT: Exercise 1, Exercise 2, Exercise 3, Exercise 4, Exercise 5].
+   - For each skipped exercise (or for the group), ask WHY they were skipped. Use the multi-select format: [MULTI-SELECT: Lack of time, Too much pain, Too difficult, Forgot how to do it, Other].
+   - Encourage the user to select all that apply.
 3. If "None":
-   - Ask WHY the entire session was skipped. Provide the same 5 reason buttons: [BUTTON: Lack of time], [BUTTON: Too much pain], [BUTTON: Too difficult], [BUTTON: Forgot how to do it], [BUTTON: Other].
+   - Ask WHY the entire session was skipped. Use the multi-select format: [MULTI-SELECT: Lack of time, Too much pain, Too difficult, Forgot how to do it, Other].
    - Log "Session skipped" in the status.
 4. Map responses to internal fields.
 
@@ -468,12 +469,13 @@ The active experience phase is provided separately by the app context.
 - Do not mix workflows from other phases unless the patient explicitly asks to switch.
 - If the patient intent clearly belongs to another phase, propose switching in one short sentence.
 
-494: DISCRETE ANSWER PRESENTATION (BUTTONS, SLIDERS, MAPS)
+494: DISCRETE ANSWER PRESENTATION (BUTTONS, MULTI-SELECT, SLIDERS, MAPS)
 495: Whenever you present potential answers or expect the user to pick from specific options:
-496: - **Buttons**: Use [BUTTON: Option Label].
-497: - **Pain Scale**: Use [SLIDER: Pain Level, 0, 10]. This will show a 0-10 slider.
-498: - **Pain Location**: Use [BODYMAP]. This will show an interactive body map for location selection.
-499: - Always include a separate free-text path for custom answers: tell the user they can use the text field labeled "Other" with placeholder text "Other" if their answer does not match any button.
+496: - **Buttons (Single Select)**: Use [BUTTON: Option Label].
+497: - **Multi-Select**: Use [MULTI-SELECT: Option 1, Option 2, ...]. Use this when you want the user to be able to pick more than one answer (e.g., multiple skipped exercises or multiple reasons).
+498: - **Pain Scale**: Use [SLIDER: Pain Level, 0, 10].
+499: - **Pain Location**: Use [BODYMAP].
+500: - Always include a separate free-text path for custom answers via the "Other" field.
 """
 )
 
@@ -575,6 +577,14 @@ def parse_buttons(text):
     return re.findall(r"\[BUTTON:\s*(.*?)\]", text, re.IGNORECASE)
 
 
+def parse_multi_select(text):
+    """Extract options from text formatted as [MULTI-SELECT: Option 1, Option 2, ...]"""
+    match = re.search(r"\[MULTI-SELECT:\s*(.*?)\]", text, re.IGNORECASE)
+    if match:
+        return [opt.strip() for opt in match.group(1).split(",")]
+    return []
+
+
 def parse_slider(text):
     """Extract slider details from text formatted as [SLIDER: Label, Min, Max]"""
     match = re.search(r"\[SLIDER:\s*(.*?),\s*(\d+),\s*(\d+)\]", text, re.IGNORECASE)
@@ -584,8 +594,9 @@ def parse_slider(text):
 
 
 def clean_ui_tags(text):
-    """Remove [BUTTON: ...], [SLIDER: ...], and [BODYMAP] tags from text for display"""
+    """Remove tags from text for display"""
     cleaned = re.sub(r"\[BUTTON:\s*(.*?)\]", r"\1", text, flags=re.IGNORECASE)
+    cleaned = re.sub(r"\[MULTI-SELECT:\s*(.*?)\]", r"", cleaned, flags=re.IGNORECASE)
     cleaned = re.sub(r"\[SLIDER:\s*(.*?),\s*(\d+),\s*(\d+)\]", r"", cleaned, flags=re.IGNORECASE)
     cleaned = re.sub(r"\[BODYMAP\]", r"", cleaned, flags=re.IGNORECASE)
     # Clean up multiple spaces and newlines left behind
@@ -1092,6 +1103,39 @@ if app_mode == "Patient (Rehab Support)" and patient_phase == "Conversational Ch
 if app_mode == "Patient (Rehab Support)" and st.session_state.messages:
     last_msg = st.session_state.messages[-1]
     if last_msg["role"] == "assistant":
+        # Handle Multi-Select
+        multi_options = parse_multi_select(last_msg["content"])
+        if multi_options:
+            state_key = f"multi_select_state_{len(st.session_state.messages)}"
+            if state_key not in st.session_state:
+                st.session_state[state_key] = []
+            
+            st.markdown(f"<div style='margin-bottom:1rem; padding:1rem; background:#FDFCFA; border:1px solid #2B5CD9; border-radius:12px;'>", unsafe_allow_html=True)
+            st.caption("Select all that apply:")
+            
+            # Use columns for options
+            cols = st.columns(3)
+            for idx, opt in enumerate(multi_options):
+                is_selected = opt in st.session_state[state_key]
+                label = f"✓ {opt}" if is_selected else opt
+                if cols[idx % 3].button(label, key=f"ms_{state_key}_{idx}", use_container_width=True):
+                    if opt in st.session_state[state_key]:
+                        st.session_state[state_key].remove(opt)
+                    else:
+                        st.session_state[state_key].append(opt)
+                    st.rerun()
+            
+            if st.button("Confirm Selection", type="primary", use_container_width=True):
+                if st.session_state[state_key]:
+                    user_ts = datetime.now().isoformat(timespec="seconds")
+                    selected_str = ", ".join(st.session_state[state_key])
+                    st.session_state.messages.append({"role": "user", "content": selected_str, "ts": user_ts})
+                    st.session_state.pop(state_key, None) # Clear state for next use
+                    st.rerun()
+                else:
+                    st.warning("Please select at least one option.")
+            st.markdown("</div>", unsafe_allow_html=True)
+
         # Handle Slider
         slider_data = parse_slider(last_msg["content"])
         if slider_data:
