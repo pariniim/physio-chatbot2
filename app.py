@@ -631,19 +631,6 @@ def render_toggle_buttons(options, selected, key_prefix):
 
 
 def render_onboarding_interface():
-    st.markdown(
-        """
-        <div style="background:#f8fafc; border-radius:20px; box-shadow:0 6px 20px rgba(15,23,42,0.08);
-                    padding:0.85rem 1rem; border:1px solid #e5e7eb; margin-bottom:0.8rem;">
-          <div style="display:flex; justify-content:space-between; align-items:center;">
-            <span style="font-weight:700; color:#0f172a;">9:41</span>
-            <span style="font-weight:700; color:#0f172a;">Movy</span>
-          </div>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-
     ui_state = st.session_state.setdefault(
         "onboarding_ui",
         {
