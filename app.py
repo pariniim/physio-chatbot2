@@ -531,7 +531,10 @@ with st.sidebar:
     st.markdown("---")
 
 if app_mode == "Patient (Rehab Support)":
-    st.title("💪 Patient Companion AI")
+    st.markdown(
+        "<h1 style='color:#1E4CBD; margin:0;'>Onboarding for Patients</h1>",
+        unsafe_allow_html=True,
+    )
     st.markdown("Your digital physiotherapy rehabilitation support.")
     current_prompt = (
         PATIENT_SYSTEM_PROMPT
