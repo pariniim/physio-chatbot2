@@ -624,6 +624,18 @@ def apply_patient_theme():
             background-color: #244fbe;
             border-color: #244fbe;
         }
+        .stButton > button:not([kind="primary"]) {
+            background-color: #ffffff;
+            border: 2px solid #2B5CD9;
+            color: #2B5CD9;
+            border-radius: 999px;
+            font-weight: 600;
+        }
+        .stButton > button:not([kind="primary"]):hover {
+            background-color: #f8fbff;
+            border-color: #2B5CD9;
+            color: #2B5CD9;
+        }
         .stTextInput div[data-baseweb="input"] {
             background-color: #F3EDE5 !important;
             border: 1px solid #1E4CBD !important;
