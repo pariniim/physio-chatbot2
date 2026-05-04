@@ -300,20 +300,27 @@ Do not skip steps unless the patient has already provided the required informati
 Keep messages short, supportive, and clinically appropriate.
 Never give medical advice.
 
+SESSION CONTEXT (MANDATORY)
+- This check-in is a post-session check-in: always frame questions around the exercise session the patient has just completed (not a generic "since last time" unless they bring it up).
+- Use wording like "this session," "the exercises you just did," or "right after your session" so the patient knows you mean the session that just occurred.
+
 CHECK-IN STRUCTURE (Q1 -> Q5 -> CLOSE)
 
-Q1 - ADHERENCE
-Goal: Determine whether the patient completed their exercises.
-1. Ask: "How did your exercises go since our last session?"
-2. Interpret the response into one of:
-   - full adherence
-   - partial adherence
-   - zero adherence
-3. If unclear, ask a clarifying question.
-4. If zero adherence:
-   - acknowledge without judgment
-   - skip Q2 and Q3
-   - proceed directly to Q4
+Q1 - ADHERENCE (BRANCHING)
+Goal: Determine how much of the exercise session just completed the patient did.
+1. Ask one short question tied to the session they just finished (e.g. how much they completed in that session).
+2. In the same turn, present exactly three clear answer options the patient can choose from (as if they were tap-to-select replies):
+   - All exercises
+   - Some exercises
+   - None
+3. Map their choice to internal adherence:
+   - "All exercises" -> full adherence -> continue to Q2 and Q3
+   - "Some exercises" -> partial adherence -> continue to Q2 and Q3 (you may briefly ask which parts if useful, then continue)
+   - "None" -> zero adherence -> branch: acknowledge without judgment, skip Q2 and Q3, go directly to Q4
+4. If the patient answers in free text, interpret it into one of the three branches above; if unclear, ask a clarifying question and offer the three options again.
+5. Branching rules:
+   - All or Some: follow Q2, then Q3, then Q4, Q5, CLOSE
+   - None: skip Q2 and Q3, then Q4, Q5, CLOSE
 
 Q2 - CONFIDENCE
 (Only if adherence > 0)
@@ -468,7 +475,7 @@ GENERAL RULES
 
 PATIENT_PHASE_WELCOME = {
     "Conversational Onboarding": "Hi, I’m Movy, your rehab companion. Let’s do a quick onboarding so you know exactly how I’ll support you between physio sessions.",
-    "Conversational Check-In": "Hi, I’m Movy. Let’s do your check-in together. I’ll ask a few quick questions about completion, pain, and how today felt.",
+    "Conversational Check-In": "Hi, I’m Movy. Let’s do your post-session check-in about the exercise session you just completed.",
     "In-Exercise Session": "Hi, I’m Movy. I’ll guide you through this exercise session step by step. Tell me when you’re ready to begin.",
 }
 
@@ -1050,7 +1057,7 @@ if app_mode == "Patient (Rehab Support)" and patient_phase == "Conversational Ch
             st.session_state.messages.append(
                 {
                     "role": "assistant",
-                    "content": "Great, let's continue the check-in. How did your exercises go since our last session?",
+                    "content": "Great, let's continue the check-in. Thinking about the exercise session you just finished—how much did you complete? You can reply with: All exercises, Some exercises, or None.",
                     "ts": datetime.now().isoformat(timespec="seconds"),
                 }
             )
