@@ -2,6 +2,7 @@ import streamlit as st
 import openai
 import json
 import html
+from datetime import datetime
 
 # --- SYSTEM PROMPTS ---
 PATIENT_BASE_SYSTEM_PROMPT = """PATIENT-SIDE AI AGENT
@@ -545,15 +546,41 @@ else:
     welcome_msg = "Hello! I am your clinical AI assistant. I can help analyze patient data, suggest exercise progressions, or format clinical notes. How can I assist you today?"
 
 
-def render_assistant_bubble(text):
+def format_message_timestamp(ts_value):
+    if not ts_value:
+        return "just now"
+    try:
+        sent_at = datetime.fromisoformat(ts_value)
+    except ValueError:
+        return "just now"
+
+    now = datetime.now()
+    delta = now - sent_at
+    total_seconds = max(int(delta.total_seconds()), 0)
+
+    if total_seconds < 60:
+        label = "just now"
+    elif total_seconds < 3600:
+        label = f"{total_seconds // 60}m ago"
+    elif total_seconds < 86400:
+        label = f"{total_seconds // 3600}h ago"
+    else:
+        label = f"{total_seconds // 86400}d ago"
+        label += f" · {sent_at.strftime('%Y-%m-%d')}"
+    return label
+
+
+def render_assistant_bubble(text, ts_value=None):
     safe_text = html.escape(text).replace("\n", "<br>")
+    ts_label = format_message_timestamp(ts_value)
     st.markdown(
         f"""
         <div style="display:flex; justify-content:flex-start; margin:0.35rem 0;">
-          <div style="max-width:82%; background:#C4603A; color:#ffffff; padding:0.7rem 0.85rem;
+          <div style="max-width:82%; background:#C4603A; color:#ffffff; padding:0.7rem 0.85rem 0.45rem 0.85rem;
                       border-radius:18px 18px 18px 6px; box-shadow:0 2px 8px rgba(15,23,42,0.10);
                       border:1px solid #b4532c;">
             {safe_text}
+            <div style="font-size:0.72rem; opacity:0.9; margin-top:0.35rem;">{ts_label}</div>
           </div>
         </div>
         """,
@@ -561,15 +588,17 @@ def render_assistant_bubble(text):
     )
 
 
-def render_patient_bubble(text):
+def render_patient_bubble(text, ts_value=None):
     safe_text = html.escape(text).replace("\n", "<br>")
+    ts_label = format_message_timestamp(ts_value)
     st.markdown(
         f"""
         <div style="display:flex; justify-content:flex-end; margin:0.35rem 0;">
-          <div style="max-width:82%; background:#FDFCFA; color:#0f172a; padding:0.7rem 0.85rem;
+          <div style="max-width:82%; background:#FDFCFA; color:#0f172a; padding:0.7rem 0.85rem 0.45rem 0.85rem;
                       border-radius:18px 18px 6px 18px; box-shadow:0 2px 8px rgba(15,23,42,0.12);
                       border:1px solid #2B5CD9;">
             {safe_text}
+            <div style="font-size:0.72rem; color:#475569; margin-top:0.35rem;">{ts_label}</div>
           </div>
         </div>
         """,
@@ -823,24 +852,35 @@ thread_key = (
 
 if thread_key not in st.session_state.chat_threads:
     st.session_state.chat_threads[thread_key] = [
-        {"role": "user", "content": "SYSTEM INSTRUCTION (Act exactly as described below):\n\n" + current_prompt},
-        {"role": "assistant", "content": welcome_msg},
+        {
+            "role": "user",
+            "content": "SYSTEM INSTRUCTION (Act exactly as described below):\n\n" + current_prompt,
+            "ts": datetime.now().isoformat(timespec="seconds"),
+        },
+        {
+            "role": "assistant",
+            "content": welcome_msg,
+            "ts": datetime.now().isoformat(timespec="seconds"),
+        },
     ]
 else:
     st.session_state.chat_threads[thread_key][0] = {
         "role": "user",
         "content": "SYSTEM INSTRUCTION (Act exactly as described below):\n\n" + current_prompt,
+        "ts": st.session_state.chat_threads[thread_key][0].get("ts", datetime.now().isoformat(timespec="seconds")),
     }
 
 st.session_state.messages = st.session_state.chat_threads[thread_key]
 
 # Display chat messages (excluding the hidden system instructions)
 for message in st.session_state.messages[1:]:
+    if "ts" not in message:
+        message["ts"] = datetime.now().isoformat(timespec="seconds")
     if app_mode == "Patient (Rehab Support)":
         if message["role"] == "assistant":
-            render_assistant_bubble(message["content"])
+            render_assistant_bubble(message["content"], message.get("ts"))
         else:
-            render_patient_bubble(message["content"])
+            render_patient_bubble(message["content"], message.get("ts"))
     else:
         with st.chat_message(message["role"]):
             st.markdown(message["content"])
@@ -852,9 +892,10 @@ if prompt := st.chat_input("Type your message here..."):
         st.stop()
         
     # Append user message
-    st.session_state.messages.append({"role": "user", "content": prompt})
+    user_ts = datetime.now().isoformat(timespec="seconds")
+    st.session_state.messages.append({"role": "user", "content": prompt, "ts": user_ts})
     if app_mode == "Patient (Rehab Support)":
-        render_patient_bubble(prompt)
+        render_patient_bubble(prompt, user_ts)
     else:
         with st.chat_message("user"):
             st.markdown(prompt)
@@ -894,12 +935,14 @@ if prompt := st.chat_input("Type your message here..."):
                         unsafe_allow_html=True,
                     )
             message_placeholder.empty()
-            render_assistant_bubble(full_response)
+            assistant_ts = datetime.now().isoformat(timespec="seconds")
+            render_assistant_bubble(full_response, assistant_ts)
         except Exception as e:
             st.error(f"An error occurred: {e}")
             full_response = "I encountered an error connecting to my brain. Please check your API key."
-            render_assistant_bubble(full_response)
-        st.session_state.messages.append({"role": "assistant", "content": full_response})
+            assistant_ts = datetime.now().isoformat(timespec="seconds")
+            render_assistant_bubble(full_response, assistant_ts)
+        st.session_state.messages.append({"role": "assistant", "content": full_response, "ts": assistant_ts})
     else:
         with st.chat_message("assistant"):
             message_placeholder = st.empty()
