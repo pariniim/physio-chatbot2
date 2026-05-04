@@ -1,6 +1,5 @@
 import streamlit as st
 import openai
-import json
 import html
 from datetime import datetime
 
@@ -749,6 +748,7 @@ def render_onboarding_interface():
             "preferred_times": [],
             "messages": [],
             "completion_logged": False,
+            "finalized": False,
         },
     )
 
@@ -876,19 +876,54 @@ def render_onboarding_interface():
             st.rerun()
         return
 
-    summary = {
-        "name": ui_state["name"],
-        "date_of_birth": ui_state["date_of_birth"],
-        "physiotherapist": ui_state["physiotherapist"],
-        "preferred_days": ui_state["preferred_days"],
-        "preferred_times": ui_state["preferred_times"],
-        "status": "onboarding_complete",
-    }
     if not ui_state["completion_logged"]:
-        append_onboarding_message("assistant", "Thanks, everything for your appointment is confirmed.")
+        append_onboarding_message("assistant", "Please review your details below. You can confirm or change something.")
         ui_state["completion_logged"] = True
         st.rerun()
-    st.code(json.dumps(summary, indent=2), language="json")
+
+    st.markdown(
+        f"""
+        <div style="background:#ffffff; border:1px solid #dbe4ff; border-radius:14px; padding:0.9rem 1rem; margin-top:0.35rem;">
+          <div style="color:#1E4CBD; font-weight:700; margin-bottom:0.45rem;">Summary</div>
+          <div><strong>Name:</strong> {html.escape(ui_state["name"])}</div>
+          <div><strong>Date of birth:</strong> {html.escape(ui_state["date_of_birth"])}</div>
+          <div><strong>Physiotherapist:</strong> {html.escape(ui_state["physiotherapist"])}</div>
+          <div><strong>Preferred days:</strong> {html.escape(", ".join(ui_state["preferred_days"]))}</div>
+          <div><strong>Preferred time:</strong> {html.escape(", ".join(ui_state["preferred_times"]))}</div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    if not ui_state["finalized"]:
+        primary_col, secondary_col = st.columns([2, 1])
+        if primary_col.button("Confirm details", type="primary", use_container_width=True):
+            append_onboarding_message("user", "Everything looks correct.")
+            append_onboarding_message("assistant", "Thanks, everything for your appointment is confirmed.")
+            ui_state["finalized"] = True
+            st.rerun()
+
+        with secondary_col:
+            st.caption("Change:")
+            if st.button("Name/DOB", use_container_width=True):
+                ui_state["name"] = ""
+                ui_state["date_of_birth"] = ""
+                ui_state["screen"] = 2
+                append_onboarding_message("assistant", "Can you confirm your name and date of birth?")
+                st.rerun()
+            if st.button("Physio", use_container_width=True):
+                ui_state["physiotherapist"] = ""
+                ui_state["screen"] = 2
+                append_onboarding_message("assistant", "Which physiotherapist are you seeing?")
+                st.rerun()
+            if st.button("Schedule", use_container_width=True):
+                ui_state["preferred_days"] = []
+                ui_state["preferred_times"] = []
+                ui_state["screen"] = 3
+                append_onboarding_message("assistant", "When do you prefer to exercise? Tap the days and times that work best.")
+                st.rerun()
+    else:
+        st.success("Onboarding complete.")
 
 # --- API KEY HANDLING ---
 api_key = st.secrets.get("GROQ_API_KEY", st.secrets.get("OPENROUTER_API_KEY", st.secrets.get("OPENAI_API_KEY", "")))
