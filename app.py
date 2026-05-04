@@ -737,24 +737,24 @@ def render_onboarding_interface():
         return
 
     if ui_state["screen"] == 2:
-        identity_text = st.text_input(
-            "Name and date of birth",
-            value="",
-            placeholder="Sarah, 14 March 1990",
-            key="onboarding_identity_input",
-        )
-        if st.button("Confirm identity", type="primary"):
-            parsed_name, parsed_dob = parse_identity_input(identity_text)
-            if not parsed_name or not parsed_dob:
-                st.warning("Please include both name and date of birth.")
-            else:
-                ui_state["name"] = parsed_name
-                ui_state["date_of_birth"] = parsed_dob
-                append_onboarding_message("user", f"{ui_state['name']}, {ui_state['date_of_birth']}")
-                append_onboarding_message("assistant", "Which physiotherapist are you seeing?")
-                st.rerun()
-
-        if ui_state["name"] and ui_state["date_of_birth"]:
+        if not (ui_state["name"] and ui_state["date_of_birth"]):
+            identity_text = st.text_input(
+                "Name and date of birth",
+                value="",
+                placeholder="Sarah, 14 March 1990",
+                key="onboarding_identity_input",
+            )
+            if st.button("Confirm identity", type="primary"):
+                parsed_name, parsed_dob = parse_identity_input(identity_text)
+                if not parsed_name or not parsed_dob:
+                    st.warning("Please include both name and date of birth.")
+                else:
+                    ui_state["name"] = parsed_name
+                    ui_state["date_of_birth"] = parsed_dob
+                    append_onboarding_message("user", f"{ui_state['name']}, {ui_state['date_of_birth']}")
+                    append_onboarding_message("assistant", "Which physiotherapist are you seeing?")
+                    st.rerun()
+        else:
             options = [
                 "Dr. Emma Walsh",
                 "Dr. David Smith",
