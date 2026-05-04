@@ -710,7 +710,17 @@ def render_toggle_buttons(options, selected, key_prefix):
                 updated.remove(option)
             else:
                 updated.append(option)
-            st.rerun()
+    return updated
+
+
+def render_single_select_buttons(options, selected, key_prefix):
+    cols = st.columns(len(options))
+    updated = selected
+    for idx, option in enumerate(options):
+        is_selected = option == updated
+        label = f"✓ {option}" if is_selected else option
+        if cols[idx].button(label, key=f"{key_prefix}_{option}"):
+            updated = option
     return updated
 
 
@@ -835,12 +845,14 @@ def render_onboarding_interface():
             ui_state["preferred_days"],
             "day_toggle",
         )
-        st.caption("Preferred times")
-        ui_state["preferred_times"] = render_toggle_buttons(
+        st.caption("Preferred time")
+        selected_time = ui_state["preferred_times"][0] if ui_state["preferred_times"] else ""
+        selected_time = render_single_select_buttons(
             ["Morning", "Mid-day", "Evening"],
-            ui_state["preferred_times"],
+            selected_time,
             "time_toggle",
         )
+        ui_state["preferred_times"] = [selected_time] if selected_time else []
 
         typed_schedule, schedule_sent = render_manual_input_row(
             "typed_schedule_input",
@@ -851,7 +863,7 @@ def render_onboarding_interface():
             if parsed_days:
                 ui_state["preferred_days"] = parsed_days
             if parsed_times:
-                ui_state["preferred_times"] = parsed_times
+                ui_state["preferred_times"] = [parsed_times[0]]
             if not parsed_days and not parsed_times:
                 st.warning("Please include at least a day or a time.")
 
