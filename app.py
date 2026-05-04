@@ -309,7 +309,7 @@ CHECK-IN STRUCTURE (Q1 -> Q5 -> CLOSE)
 Q1 - ADHERENCE (BRANCHING)
 Goal: Determine how much of the exercise session just completed the patient did.
 1. Ask one short question tied to the session they just finished (e.g. how much they completed in that session).
-2. In the same turn, present exactly three clear answer options the patient can choose from (as if they were tap-to-select replies):
+2. In the same turn, present exactly three clear answer options the patient can choose from, each as its own button label (one button per option), plus follow DISCRETE ANSWER PRESENTATION: always mention the separate "Other" text field (placeholder "Other") for answers that do not fit the three buttons:
    - All exercises
    - Some exercises
    - None
@@ -490,6 +490,12 @@ The active experience phase is provided separately by the app context.
 - Adapt goals, questions, and response style to that active phase only.
 - Do not mix workflows from other phases unless the patient explicitly asks to switch.
 - If the patient intent clearly belongs to another phase, propose switching in one short sentence.
+
+DISCRETE ANSWER PRESENTATION (BUTTONS + OTHER)
+Whenever you present potential answers or expect the user to pick from specific options (multiple choice, suggested replies, branching choices, scales presented as separate picks, etc.):
+- Provide exactly one short label per option, formatted so the interface can show one button per answer (each option on its own line or clearly separated).
+- Always include a separate free-text path for custom answers: tell the user they can use the text field labeled "Other" with placeholder text "Other" if their answer does not match any button.
+- Keep button labels concise, scannable, and distinct from each other.
 """
 )
 
