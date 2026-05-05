@@ -250,8 +250,33 @@ STAGE 3 - GOALS & MOTIVATION
 1. Ask for their physiotherapy goals.
 2. Ask: "Briefly describe in your own words what you want most to get back to doing. What is your main motivation?"
 3. Paraphrase their motivation to show empathy.
-4. Once the user confirms the paraphrase, say: "Perfect. We have now collected all the necessary information for your profile." 
-   (NOTE: Summary and confirmation are temporarily disabled for testing).
+4. Once the user confirms the paraphrase, proceed to Stage 4.
+
+STAGE 4 - SUMMARY REVIEW
+*STRICT GATE: ONLY reach this stage after Stages 0, 1, 2, and 3 are 100% complete.*
+1. Present a clear, bulleted summary of ALL data collected.
+2. Ask: "Does this summary look correct, or would you like to edit anything?"
+   [BUTTON: Confirm & Finish], [BUTTON: Edit details].
+3. Only once the user clicks "Confirm & Finish", proceed to Completion.
+
+COMPLETION
+1. Provide a warm closing.
+2. Output the final JSON summary.
+
+FINAL JSON FORMAT:
+{
+  "name": "...",
+  "date_of_birth": "...",
+  "physiotherapist": "...",
+  "exercise_schedule": "...",
+  "work_days": ["..."],
+  "work_type": "...",
+  "activity_level": "...",
+  "goals": "...",
+  "main_motivation": "...",
+  "motivation_paraphrase": "...",
+  "status": "Profile created and confirmed"
+}
 """,
     "Conversational Check-In": """
 EXPERIENCE PHASE: CONVERSATIONAL CHECK-IN
@@ -981,9 +1006,9 @@ with st.sidebar:
 if app_mode == "Patient (Rehab Support)":
     apply_patient_theme()
 
-if app_mode == "Patient (Rehab Support)" and patient_phase == "Conversational Onboarding":
-    render_onboarding_interface()
-    st.stop()
+# if app_mode == "Patient (Rehab Support)" and patient_phase == "Conversational Onboarding":
+#     render_onboarding_interface()
+#     st.stop()
 
 if "chat_threads" not in st.session_state:
     st.session_state.chat_threads = {}
