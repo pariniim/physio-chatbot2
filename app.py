@@ -280,22 +280,7 @@ STAGE 4 - SUMMARY REVIEW
 
 COMPLETION
 1. Provide a warm closing.
-2. Output the final JSON summary.
-
-FINAL JSON FORMAT:
-{
-  "name": "...",
-  "date_of_birth": "...",
-  "physiotherapist": "...",
-  "exercise_schedule": "...",
-  "work_days": ["..."],
-  "work_type": "...",
-  "activity_level": "...",
-  "goals": "...",
-  "main_motivation": "...",
-  "motivation_paraphrase": "...",
-  "status": "Profile created and confirmed"
-}
+2. Tell the patient they are ready to begin their rehabilitation journey. Do NOT output any JSON code in this final message.
 """,
     "Conversational Check-In": """
 EXPERIENCE PHASE: CONVERSATIONAL CHECK-IN
