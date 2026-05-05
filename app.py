@@ -354,7 +354,8 @@ CLOSE - ENCOURAGEMENT
 4. Do NOT output raw JSON to the user. Instead, output the final structured JSON summary silently at the very end of your response so the system can parse it.
 
 FINAL OUTPUT FORMAT
-Return the final summary in this JSON structure:
+Return the final summary wrapped in a markdown json block:
+```json
 {
   "adherence": "...",
   "skipped_exercises": [{"exercise": "...", "reason": "..."}],
@@ -369,6 +370,7 @@ Return the final summary in this JSON structure:
   "additional_notes": "...",
   "status": "Check-in completed"
 }
+```
 
 GENERAL RULES
 - Never provide medical advice.
@@ -431,7 +433,8 @@ STAGE 3: SESSION END
 3. Silently output the structured summary below at the very end of your final response.
 
 FINAL OUTPUT FORMAT
-Return the final summary in this JSON structure:
+Return the final summary wrapped in a markdown json block:
+```json
 {
   "exercise_name": "Full Session",
   "mid_session_status": "...",
@@ -439,6 +442,7 @@ Return the final summary in this JSON structure:
   "notes": "...",
   "status": "Exercise session completed"
 }
+```
 """,
 }
 
@@ -603,6 +607,11 @@ def clean_ui_tags(text):
     cleaned = re.sub(r"\[SLIDER:\s*(.*?),\s*(\d+),\s*(\d+)\]", r"", cleaned, flags=re.IGNORECASE)
     cleaned = re.sub(r"\[BODYMAP\]", r"", cleaned, flags=re.IGNORECASE)
     cleaned = re.sub(r"\[PROFILE_SUMMARY:\s*\{.*?\}\s*\]", r"", cleaned, flags=re.IGNORECASE | re.DOTALL)
+    # Strip markdown JSON blocks
+    cleaned = re.sub(r"```json\s*\{.*?\}\s*```", r"", cleaned, flags=re.IGNORECASE | re.DOTALL)
+    # Also strip raw { ... } JSON if it appears at the very end of the text
+    cleaned = re.sub(r"\{\s*\"exercise_name\".*?\}\s*$", r"", cleaned, flags=re.IGNORECASE | re.DOTALL)
+    cleaned = re.sub(r"\{\s*\"adherence\".*?\}\s*$", r"", cleaned, flags=re.IGNORECASE | re.DOTALL)
     # Clean up multiple spaces and newlines left behind
     cleaned = re.sub(r"\n\s*\n", "\n", cleaned).strip()
     return cleaned
@@ -1096,7 +1105,7 @@ if app_mode == "Patient (Rehab Support)" and patient_phase == "Conversational On
         st.session_state[onboarding_reschedule_key] = None
 
     if st.session_state[onboarding_gate_key] is None:
-        gate_text = "Hi Sarah! I'm Movy. Would you like to start your onboarding session now or reschedule it? [BUTTON: Start onboarding] [BUTTON: Reschedule]"
+        gate_text = "Would you like to start your onboarding session now or reschedule it? [BUTTON: Start onboarding] [BUTTON: Reschedule]"
         if not st.session_state.chat_threads[thread_key] or st.session_state.chat_threads[thread_key][-1]["content"] != gate_text:
             st.session_state.chat_threads[thread_key].append({
                 "role": "assistant",
