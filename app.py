@@ -253,7 +253,6 @@ STAGE 3 - GOALS & MOTIVATION
 4. Once the user confirms the paraphrase, say: "Perfect. We have now collected all the necessary information for your profile." 
    (NOTE: Summary and confirmation are temporarily disabled for testing).
 """,
-""",
     "Conversational Check-In": """
 EXPERIENCE PHASE: CONVERSATIONAL CHECK-IN
 You are a physiotherapy check-in assistant.
