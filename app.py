@@ -450,7 +450,7 @@ Return the final summary in this JSON structure:
 PATIENT_PHASE_WELCOME = {
     "Conversational Onboarding": "Hi, I’m Movy, your rehab companion. Let’s do a quick onboarding so you know exactly how I’ll support you between physio sessions.",
     "Conversational Check-In": "Hi, I’m Movy. Let’s do your post-session check-in about the exercise session you just completed.",
-    "In-Exercise Session": "Hi, I’m Movy. I’ll guide you through this exercise session step by step. Tell me when you’re ready to begin.",
+    "In-Exercise Session": "Hi, I’m Movy. I’ll guide you through this exercise session step by step. Tell me when you’re ready to begin. [BUTTON: I'm ready]",
 }
 
 PATIENT_SYSTEM_PROMPT = (
