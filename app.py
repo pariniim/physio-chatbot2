@@ -330,8 +330,11 @@ Q3 - PAIN DETAILS (Only if Pain Level > 0)
 8. WAIT for the user's response.
 
 Q4 - CONFIDENCE & DIFFICULTY (Only if adherence > 0)
+*IMPORTANT: Ask each of the following questions in a SEPARATE turn. Do not combine them.*
 1. Ask: "How confident did you feel doing the exercises?" Provide chips: [BUTTON: Low], [BUTTON: Medium], [BUTTON: High].
-2. Ask: "How difficult did the exercises feel?" Provide chips: [BUTTON: Easy], [BUTTON: Moderate], [BUTTON: Hard].
+2. WAIT for the user's response.
+3. Ask: "How difficult did the exercises feel?" Provide chips: [BUTTON: Easy], [BUTTON: Moderate], [BUTTON: Hard].
+4. WAIT for the user's response.
 
 Q5 - OPEN REFLECTION
 1. Ask: "Is there anything else you'd like to share about your exercises or how you're feeling?"
