@@ -241,10 +241,9 @@ STAGE 0 - IDENTITY & CLINIC
 
 STAGE 1 - EXERCISE SCHEDULE
 1. Ask: "When would you like to perform your exercises during the week? Select your preferred days and times."
-2. Present days as multi-select: [MULTI-SELECT: Mon, Tue, Wed, Thu, Fri, Sat, Sun].
-3. Present times as buttons: [BUTTON: Morning], [BUTTON: Afternoon], [BUTTON: Evening].
-4. Extract the schedule.
-5. DO NOT FINISH HERE. Move immediately to Stage 2.
+2. Present days and times as multi-select: [MULTI-SELECT: Mon, Tue, Wed, Thu, Fri, Sat, Sun] and [MULTI-SELECT: Morning, Afternoon, Evening].
+3. Extract the schedule.
+4. DO NOT FINISH HERE. Move immediately to Stage 2.
 
 STAGE 2 - LIFESTYLE & ACTIVITY (MANDATORY)
 *You MUST ask each of these 3 questions. Do not combine them.*
@@ -581,10 +580,11 @@ def parse_buttons(text):
 
 def parse_multi_select(text):
     """Extract options from text formatted as [MULTI-SELECT: Option 1, Option 2, ...]"""
-    match = re.search(r"\[MULTI-SELECT:\s*(.*?)\]", text, re.IGNORECASE)
-    if match:
-        return [opt.strip() for opt in match.group(1).split(",")]
-    return []
+    matches = re.findall(r"\[MULTI-SELECT:\s*(.*?)\]", text, re.IGNORECASE)
+    options = []
+    for match in matches:
+        options.extend([opt.strip() for opt in match.split(",")])
+    return options
 
 
 def parse_slider(text):
@@ -1160,16 +1160,6 @@ if app_mode == "Patient (Rehab Support)" and st.session_state.messages:
                     else:
                         st.session_state[state_key].append(opt)
                     st.rerun()
-            
-            if st.button("Confirm Selection", type="primary", use_container_width=True):
-                if st.session_state[state_key]:
-                    user_ts = datetime.now().isoformat(timespec="seconds")
-                    selected_str = ", ".join(st.session_state[state_key])
-                    st.session_state.messages.append({"role": "user", "content": selected_str, "ts": user_ts})
-                    st.session_state.pop(state_key, None) # Clear state for next use
-                    st.rerun()
-                else:
-                    st.warning("Please select at least one option.")
             st.markdown("</div>", unsafe_allow_html=True)
 
         # Handle Slider
@@ -1258,6 +1248,18 @@ if app_mode == "Patient (Rehab Support)" and st.session_state.messages:
                             })
 
                         st.rerun()
+                        
+        # Render Confirm Selection at the very bottom if multi-select exists
+        if multi_options:
+            if st.button("Confirm Selection", type="primary", use_container_width=True):
+                if st.session_state[state_key]:
+                    user_ts = datetime.now().isoformat(timespec="seconds")
+                    selected_str = ", ".join(st.session_state[state_key])
+                    st.session_state.messages.append({"role": "user", "content": selected_str, "ts": user_ts})
+                    st.session_state.pop(state_key, None) # Clear state for next use
+                    st.rerun()
+                else:
+                    st.warning("Please select at least one option.")
 
 # User input
 # User input
