@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/streamlit-component-lib/1.3.0/streamlit.js"></script>
     <style>
         body {
             margin: 0;
@@ -61,18 +60,35 @@
     </svg>
 
     <script>
+        // Minimal Streamlit Component Protocol
+        function sendMessageToStreamlitClient(type, data) {
+            window.parent.postMessage({
+                isStreamlitMessage: true,
+                type: type,
+                ...data
+            }, "*");
+        }
+
+        function setFrameHeight(height) {
+            sendMessageToStreamlitClient("streamlit:setFrameHeight", { height: height });
+        }
+
+        function sendValue(data) {
+            sendMessageToStreamlitClient("streamlit:setComponentValue", { value: data, dataType: "json" });
+        }
+
+        // Initialize component
+        sendMessageToStreamlitClient("streamlit:componentReady", { apiVersion: 1 });
+
+        // Update height on render
+        window.addEventListener("message", function(event) {
+            if (event.data.type === "streamlit:render") {
+                setFrameHeight(420);
+            }
+        });
+
+        // App logic
         let selectedParts = new Set();
-
-        function sendValue() {
-            Streamlit.setComponentValue(Array.from(selectedParts));
-        }
-
-        function onRender(event) {
-            Streamlit.setFrameHeight(420);
-        }
-
-        Streamlit.events.addEventListener(Streamlit.RENDER_EVENT, onRender);
-        Streamlit.setComponentReady();
         
         document.querySelectorAll('.part').forEach(el => {
             el.addEventListener('click', function(e) {
@@ -84,7 +100,7 @@
                     selectedParts.add(partId);
                     this.classList.add('selected');
                 }
-                sendValue();
+                sendValue(Array.from(selectedParts));
             });
         });
     </script>
