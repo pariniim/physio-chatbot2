@@ -4,60 +4,102 @@
     <style>
         body {
             margin: 0;
-            padding: 0;
+            padding: 10px;
+            font-family: sans-serif;
             display: flex;
             justify-content: center;
+            gap: 20px;
         }
-        svg {
-            width: 100%;
+        .figure-container {
+            position: relative;
+            width: 45%;
             max-width: 250px;
-            height: 400px;
+            text-align: center;
+        }
+        .figure-container h3 {
+            margin-top: 0;
+            color: #1E4CBD;
+            font-size: 1.1rem;
+        }
+        .img-wrapper {
+            position: relative;
+            width: 100%;
+            display: inline-block;
+        }
+        .img-wrapper img {
+            width: 100%;
+            height: auto;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .spot {
+            position: absolute;
+            width: 24px;
+            height: 24px;
+            background-color: rgba(226, 232, 240, 0.7);
+            border: 2px solid #94a3b8;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
             cursor: pointer;
+            transition: all 0.2s;
         }
-        .part {
-            fill: #e2e8f0;
-            stroke: #94a3b8;
-            stroke-width: 2;
-            transition: fill 0.2s, stroke 0.2s;
+        .spot:hover {
+            background-color: rgba(203, 213, 225, 0.9);
+            transform: translate(-50%, -50%) scale(1.1);
         }
-        .part:hover {
-            fill: #cbd5e1;
-        }
-        .part.selected {
-            fill: #2B5CD9;
-            stroke: #1E4CBD;
+        .spot.selected {
+            background-color: rgba(43, 92, 217, 0.9);
+            border-color: #1E4CBD;
+            box-shadow: 0 0 8px rgba(43, 92, 217, 0.5);
         }
     </style>
 </head>
 <body>
-    <svg viewBox="0 0 200 400" id="silhouette">
-        <!-- Head & Neck -->
-        <circle cx="100" cy="40" r="25" class="part" data-id="Head" />
-        <rect x="90" y="65" width="20" height="20" class="part" data-id="Neck" />
-        
-        <!-- Torso -->
-        <path d="M60,85 L140,85 L135,135 L65,135 Z" class="part" data-id="Upper Back / Chest" />
-        <path d="M65,135 L135,135 L130,200 L70,200 Z" class="part" data-id="Lower Back / Abdomen" />
-        <path d="M70,200 L130,200 L120,230 L80,230 Z" class="part" data-id="Pelvis / Hips" />
-        
-        <!-- Shoulders & Arms -->
-        <circle cx="50" cy="95" r="15" class="part" data-id="Shoulder (L)" />
-        <circle cx="150" cy="95" r="15" class="part" data-id="Shoulder (R)" />
-        <rect x="35" y="105" width="20" height="70" rx="10" transform="rotate(15 45 105)" class="part" data-id="Arm (L)" />
-        <rect x="145" y="105" width="20" height="70" rx="10" transform="rotate(-15 155 105)" class="part" data-id="Arm (R)" />
-        
-        <!-- Legs -->
-        <rect x="75" y="225" width="22" height="100" rx="10" class="part" data-id="Leg (L)" />
-        <rect x="103" y="225" width="22" height="100" rx="10" class="part" data-id="Leg (R)" />
-        
-        <!-- Knees -->
-        <circle cx="86" cy="335" r="12" class="part" data-id="Knee (L)" />
-        <circle cx="114" cy="335" r="12" class="part" data-id="Knee (R)" />
-        
-        <!-- Feet -->
-        <rect x="73" y="345" width="26" height="30" rx="5" class="part" data-id="Ankle / Foot (L)" />
-        <rect x="101" y="345" width="26" height="30" rx="5" class="part" data-id="Ankle / Foot (R)" />
-    </svg>
+    
+    <div class="figure-container">
+        <h3>Front</h3>
+        <div class="img-wrapper">
+            <!-- The onerror handler displays a placeholder if the image is missing -->
+            <img src="body_front.png" alt="Front Body" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjQwMCI+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0iI2YxZjVmOSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBkb21pbmFudC1iYXNlbGluZT0ibWlkZGxlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSIjOTRhM2I4Ij5ib2R5X2Zyb250LnBuZzwvdGV4dD48L3N2Zz4='"/>
+            
+            <div class="spot" style="top: 15%; left: 50%;" data-id="Neck"></div>
+            <div class="spot" style="top: 25%; left: 30%;" data-id="Shoulder (R)"></div>
+            <div class="spot" style="top: 25%; left: 70%;" data-id="Shoulder (L)"></div>
+            <div class="spot" style="top: 35%; left: 50%;" data-id="Chest"></div>
+            <div class="spot" style="top: 55%; left: 50%;" data-id="Pelvis"></div>
+            
+            <div class="spot" style="top: 55%; left: 15%;" data-id="Wrist (R)"></div>
+            <div class="spot" style="top: 55%; left: 85%;" data-id="Wrist (L)"></div>
+            
+            <div class="spot" style="top: 75%; left: 35%;" data-id="Knee (R)"></div>
+            <div class="spot" style="top: 75%; left: 65%;" data-id="Knee (L)"></div>
+            
+            <div class="spot" style="top: 95%; left: 35%;" data-id="Ankle (R)"></div>
+            <div class="spot" style="top: 95%; left: 65%;" data-id="Ankle (L)"></div>
+        </div>
+    </div>
+
+    <div class="figure-container">
+        <h3>Back</h3>
+        <div class="img-wrapper">
+            <img src="body_back.png" alt="Back Body" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjQwMCI+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0iI2YxZjVmOSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBkb21pbmFudC1iYXNlbGluZT0ibWlkZGxlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSIjOTRhM2I4Ij5ib2R5X2JhY2sucG5nPC90ZXh0Pjwvc3ZnPg=='"/>
+            
+            <div class="spot" style="top: 15%; left: 50%;" data-id="Neck (Back)"></div>
+            <div class="spot" style="top: 25%; left: 30%;" data-id="Shoulder (L)"></div>
+            <div class="spot" style="top: 25%; left: 70%;" data-id="Shoulder (R)"></div>
+            <div class="spot" style="top: 35%; left: 50%;" data-id="Upper Back"></div>
+            <div class="spot" style="top: 50%; left: 50%;" data-id="Lower Back"></div>
+            
+            <div class="spot" style="top: 55%; left: 15%;" data-id="Wrist (L)"></div>
+            <div class="spot" style="top: 55%; left: 85%;" data-id="Wrist (R)"></div>
+            
+            <div class="spot" style="top: 75%; left: 35%;" data-id="Back of Knee (L)"></div>
+            <div class="spot" style="top: 75%; left: 65%;" data-id="Back of Knee (R)"></div>
+            
+            <div class="spot" style="top: 95%; left: 35%;" data-id="Ankle (L)"></div>
+            <div class="spot" style="top: 95%; left: 65%;" data-id="Ankle (R)"></div>
+        </div>
+    </div>
 
     <script>
         // Minimal Streamlit Component Protocol
@@ -80,17 +122,23 @@
         // Initialize component
         sendMessageToStreamlitClient("streamlit:componentReady", { apiVersion: 1 });
 
-        // Update height on render
+        // Update height dynamically after images load
+        function adjustHeight() {
+            const height = document.body.scrollHeight;
+            setFrameHeight(height + 20);
+        }
+
         window.addEventListener("message", function(event) {
             if (event.data.type === "streamlit:render") {
-                setFrameHeight(420);
+                setTimeout(adjustHeight, 100);
+                setTimeout(adjustHeight, 1000); // Fallback for slow images
             }
         });
 
         // App logic
         let selectedParts = new Set();
         
-        document.querySelectorAll('.part').forEach(el => {
+        document.querySelectorAll('.spot').forEach(el => {
             el.addEventListener('click', function(e) {
                 const partId = this.getAttribute('data-id');
                 if (selectedParts.has(partId)) {
