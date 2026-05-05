@@ -263,8 +263,19 @@ STAGE 3 - GOALS & MOTIVATION
 
 STAGE 4 - SUMMARY REVIEW
 *STRICT GATE: ONLY reach this stage after Stages 0, 1, 2, and 3 are 100% complete.*
-1. Present a clear, bulleted summary of ALL data collected.
-2. Ask: "Does this summary look correct, or would you like to edit anything?"
+1. Do NOT write a bulleted list. Instead, output the summary exactly in this JSON format inside a tag:
+[PROFILE_SUMMARY: {
+  "name": "...",
+  "date_of_birth": "...",
+  "physiotherapist": "...",
+  "exercise_schedule": "...",
+  "work_days": ["..."],
+  "work_type": "...",
+  "activity_level": "...",
+  "goals": "...",
+  "main_motivation": "..."
+}]
+2. Ask: "Does this profile look correct, or would you like to edit anything?"
    [BUTTON: Confirm & Finish], [BUTTON: Edit details].
 3. Only once the user clicks "Confirm & Finish", proceed to Completion.
 
@@ -594,6 +605,17 @@ def parse_slider(text):
         return match.group(1), int(match.group(2)), int(match.group(3))
     return None
 
+import json
+def parse_profile_summary(text):
+    """Extract profile summary JSON from text formatted as [PROFILE_SUMMARY: { ... }]"""
+    match = re.search(r"\[PROFILE_SUMMARY:\s*(\{.*?\})\s*\]", text, re.IGNORECASE | re.DOTALL)
+    if match:
+        try:
+            return json.loads(match.group(1))
+        except:
+            return None
+    return None
+
 
 def clean_ui_tags(text):
     """Remove tags from text for display"""
@@ -601,6 +623,7 @@ def clean_ui_tags(text):
     cleaned = re.sub(r"\[MULTI-SELECT:\s*(.*?)\]", r"", cleaned, flags=re.IGNORECASE)
     cleaned = re.sub(r"\[SLIDER:\s*(.*?),\s*(\d+),\s*(\d+)\]", r"", cleaned, flags=re.IGNORECASE)
     cleaned = re.sub(r"\[BODYMAP\]", r"", cleaned, flags=re.IGNORECASE)
+    cleaned = re.sub(r"\[PROFILE_SUMMARY:\s*\{.*?\}\s*\]", r"", cleaned, flags=re.IGNORECASE | re.DOTALL)
     # Clean up multiple spaces and newlines left behind
     cleaned = re.sub(r"\n\s*\n", "\n", cleaned).strip()
     return cleaned
@@ -1209,6 +1232,31 @@ if app_mode == "Patient (Rehab Support)" and st.session_state.messages:
                         user_ts = datetime.now().isoformat(timespec="seconds")
                         st.session_state.messages.append({"role": "user", "content": f"Location: {part}", "ts": user_ts})
                         st.rerun()
+
+        # Handle Profile Summary
+        profile_data = parse_profile_summary(last_msg["content"])
+        if profile_data:
+            work_days_str = ", ".join(profile_data.get('work_days', [])) if isinstance(profile_data.get('work_days'), list) else profile_data.get('work_days', '')
+            st.markdown(f"""
+                <div style='background:#ffffff; border:1px solid #dbe4ff; border-radius:14px; padding:1.5rem; margin-bottom:1rem; color:#1D2440; box-shadow:0 4px 6px rgba(0,0,0,0.05);'>
+                    <h3 style='color:#1E4CBD; margin-top:0; border-bottom:2px solid #f1f5f9; padding-bottom:0.5rem;'>Patient Profile Summary</h3>
+                    <div style='display:grid; grid-template-columns: 1fr 1fr; gap:1rem; margin-top:1rem;'>
+                        <div><strong>Name:</strong> {html.escape(profile_data.get('name', ''))}</div>
+                        <div><strong>DOB:</strong> {html.escape(profile_data.get('date_of_birth', ''))}</div>
+                        <div><strong>Physiotherapist:</strong> {html.escape(profile_data.get('physiotherapist', ''))}</div>
+                        <div><strong>Schedule:</strong> {html.escape(profile_data.get('exercise_schedule', ''))}</div>
+                        <div><strong>Work Days:</strong> {html.escape(work_days_str)}</div>
+                        <div><strong>Work Type:</strong> {html.escape(profile_data.get('work_type', ''))}</div>
+                        <div><strong>Activity Level:</strong> {html.escape(profile_data.get('activity_level', ''))}</div>
+                    </div>
+                    <div style='margin-top:1.2rem;'>
+                        <strong>Goals:</strong> {html.escape(profile_data.get('goals', ''))}
+                    </div>
+                    <div style='margin-top:0.8rem;'>
+                        <strong>Main Motivation:</strong> {html.escape(profile_data.get('main_motivation', ''))}
+                    </div>
+                </div>
+            """, unsafe_allow_html=True)
 
         # Handle Buttons
         buttons = parse_buttons(last_msg["content"])
