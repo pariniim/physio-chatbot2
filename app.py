@@ -300,7 +300,7 @@ CHECK-IN STRUCTURE
 Q1 - ADHERENCE & SKIPPED EXERCISES
 1. Ask how much of the session was completed: [BUTTON: All exercises], [BUTTON: Some exercises], [BUTTON: None].
 2. If "Some exercises":
-   - Ask which exercises were skipped. Use the multi-select format: [MULTI-SELECT: Exercise 1, Exercise 2, Exercise 3, Exercise 4, Exercise 5].
+   - Ask which exercises were skipped. Use the already uploaded image 'exercises_example_thumbnail.png' as the option for the exercise instead of writing 'Exercise 1'. Use the multi-select format: [MULTI-SELECT: exercises_example_thumbnail.png, Exercise 2, Exercise 3].
    - For each skipped exercise (or for the group), ask WHY they were skipped. Use the multi-select format: [MULTI-SELECT: Lack of time, Too much pain, Too difficult, Forgot how to do it, Other].
    - Encourage the user to select all that apply.
 3. If "None":
@@ -1179,13 +1179,24 @@ if app_mode == "Patient (Rehab Support)" and st.session_state.messages:
                 cols = st.columns(3)
                 for c_idx, opt in enumerate(group):
                     is_selected = opt in st.session_state[state_key]
-                    label = f"✓ {opt}" if is_selected else opt
-                    if cols[c_idx % 3].button(label, key=f"ms_{state_key}_{btn_idx}", use_container_width=True):
-                        if opt in st.session_state[state_key]:
-                            st.session_state[state_key].remove(opt)
+                    
+                    with cols[c_idx % 3]:
+                        # Handle image options
+                        if opt.lower().endswith(('.png', '.jpg', '.jpeg', '.gif')):
+                            if os.path.exists(opt):
+                                st.image(opt, use_container_width=True)
+                            else:
+                                st.caption(f"[Image: {opt}]")
+                            label = "✓ Selected" if is_selected else "Select"
                         else:
-                            st.session_state[state_key].append(opt)
-                        st.rerun()
+                            label = f"✓ {opt}" if is_selected else opt
+                            
+                        if st.button(label, key=f"ms_{state_key}_{btn_idx}", use_container_width=True):
+                            if opt in st.session_state[state_key]:
+                                st.session_state[state_key].remove(opt)
+                            else:
+                                st.session_state[state_key].append(opt)
+                            st.rerun()
                     btn_idx += 1
             st.markdown("</div>", unsafe_allow_html=True)
 
