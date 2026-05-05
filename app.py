@@ -303,7 +303,7 @@ CHECK-IN STRUCTURE
 Q1 - ADHERENCE & SKIPPED EXERCISES
 1. Ask how much of the session was completed: [BUTTON: All exercises], [BUTTON: Some exercises], [BUTTON: None].
 2. If "Some exercises":
-   - Ask which exercises were skipped. Present all exercises as thumbnails using the 'exercises_example_thumbnail.png' image and format it exactly like this: [MULTI-SELECT: exercises_example_thumbnail.png (Exercise 1), exercises_example_thumbnail.png (Exercise 2), exercises_example_thumbnail.png (Exercise 3), exercises_example_thumbnail.png (Exercise 4), exercises_example_thumbnail.png (Exercise 5)].
+   - Ask which exercises were skipped. Present all exercises as thumbnails using the 'exercises_example_thumbnail.png' image and format it exactly like this: [MULTI-SELECT: exercises_example_thumbnail.png (hip flexor stretch), exercises_example_thumbnail.png (glute bridge), exercises_example_thumbnail.png (side plank), exercises_example_thumbnail.png (clamshell), exercises_example_thumbnail.png (quad stretch)].
    - For each skipped exercise (or for the group), ask WHY they were skipped. Use the multi-select format: [MULTI-SELECT: Lack of time, Too much pain, Too difficult, Forgot how to do it, Other].
    - Encourage the user to select all that apply.
 3. If "None":
@@ -320,7 +320,7 @@ Q2 - PAIN INTENSITY (MANDATORY)
 Q3 - PAIN DETAILS (Only if Pain Level > 0)
 *IMPORTANT: Ask each of the following questions in a SEPARATE turn. Do not combine them.*
 
-1. TOPIC: EXERCISES. Ask: "Which exercises created pain or discomfort?" Present as multi-select buttons using the thumbnails: [MULTI-SELECT: exercises_example_thumbnail.png (Exercise 1), exercises_example_thumbnail.png (Exercise 2), exercises_example_thumbnail.png (Exercise 3), exercises_example_thumbnail.png (Exercise 4), exercises_example_thumbnail.png (Exercise 5), All of them].
+1. TOPIC: EXERCISES. Ask: "Which exercises created pain or discomfort?" Present as multi-select buttons using the thumbnails: [MULTI-SELECT: exercises_example_thumbnail.png (hip flexor stretch), exercises_example_thumbnail.png (glute bridge), exercises_example_thumbnail.png (side plank), exercises_example_thumbnail.png (clamshell), exercises_example_thumbnail.png (quad stretch), All of them].
 2. WAIT for the user's response.
 3. TOPIC: LOCATION. Ask: "Where exactly did you feel this sensation?" Present the body map: [BODYMAP].
 4. WAIT for the user's response.
@@ -606,7 +606,7 @@ def parse_profile_summary(text):
 
 def clean_ui_tags(text):
     """Remove tags from text for display"""
-    cleaned = re.sub(r"\[BUTTON:\s*(.*?)\]", r"\1", text, flags=re.IGNORECASE)
+    cleaned = re.sub(r"\[BUTTON:\s*(.*?)\]", r"", text, flags=re.IGNORECASE)
     cleaned = re.sub(r"\[MULTI-SELECT:\s*(.*?)\]", r"", cleaned, flags=re.IGNORECASE)
     cleaned = re.sub(r"\[SLIDER:\s*(.*?),\s*(\d+),\s*(\d+)\]", r"", cleaned, flags=re.IGNORECASE)
     cleaned = re.sub(r"\[BODYMAP\]", r"", cleaned, flags=re.IGNORECASE)
