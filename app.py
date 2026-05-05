@@ -1005,13 +1005,13 @@ api_key = st.secrets.get("GROQ_API_KEY", st.secrets.get("OPENROUTER_API_KEY", st
 with st.sidebar:
     st.header("⚙️ Settings")
     if not api_key:
-        api_key = st.text_input("Groq API Key", type="password", help="Enter your Groq API key to start chatting.")
+        api_key = st.text_input("API Key (Groq, OpenRouter, OpenAI)", type="password", help="Enter your Groq, OpenRouter, or OpenAI API key to start chatting.")
         st.markdown("This key is **not saved** and is only used for this session.")
         st.markdown("---")
-        st.markdown("### How to get an API Key")
-        st.markdown("1. Go to [Groq Console](https://console.groq.com/keys)")
-        st.markdown("2. Log in or sign up")
-        st.markdown("3. Click 'Create API Key'")
+        st.markdown("### Supported Providers")
+        st.markdown("- **Groq** (`gsk_...`): Llama 3.3 70B")
+        st.markdown("- **OpenRouter** (`sk-or-...`): Llama 3.3 70B")
+        st.markdown("- **OpenAI** (`sk-...`): GPT-4o-mini")
         
         if api_key and not (api_key.startswith("gsk_") or api_key.startswith("sk-")):
             st.warning("Please enter a valid API key.")
@@ -1338,12 +1338,22 @@ if st.session_state.messages and st.session_state.messages[-1]["role"] == "user"
         full_response = ""
 
         try:
+            if api_key.startswith("gsk_"):
+                base_url = "https://api.groq.com/openai/v1"
+                model = "llama-3.3-70b-versatile"
+            elif api_key.startswith("sk-or-"):
+                base_url = "https://openrouter.ai/api/v1"
+                model = "meta-llama/llama-3.3-70b-instruct"
+            else:
+                base_url = None
+                model = "gpt-4o-mini"
+
             client = openai.OpenAI(
                 api_key=api_key,
-                base_url="https://api.groq.com/openai/v1",
+                base_url=base_url,
             )
             responses = client.chat.completions.create(
-                model="llama-3.3-70b-versatile",
+                model=model,
                 messages=[
                     {"role": m["role"], "content": m["content"]}
                     for m in st.session_state.messages
@@ -1382,13 +1392,22 @@ if st.session_state.messages and st.session_state.messages[-1]["role"] == "user"
             full_response = ""
 
             try:
+                if api_key.startswith("gsk_"):
+                    base_url = "https://api.groq.com/openai/v1"
+                    model = "llama-3.3-70b-versatile"
+                elif api_key.startswith("sk-or-"):
+                    base_url = "https://openrouter.ai/api/v1"
+                    model = "meta-llama/llama-3.3-70b-instruct"
+                else:
+                    base_url = None
+                    model = "gpt-4o-mini"
+
                 client = openai.OpenAI(
                     api_key=api_key,
-                    base_url="https://api.groq.com/openai/v1",
+                    base_url=base_url,
                 )
-                # Using Groq's lightning fast Llama 3.3 70B model
                 responses = client.chat.completions.create(
-                    model="llama-3.3-70b-versatile",
+                    model=model,
                     messages=[
                         {"role": m["role"], "content": m["content"]}
                         for m in st.session_state.messages
