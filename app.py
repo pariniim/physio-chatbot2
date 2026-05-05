@@ -1060,6 +1060,24 @@ if app_mode == "Patient (Rehab Support)" and patient_phase == "Conversational Ch
             })
             st.rerun()
 
+if app_mode == "Patient (Rehab Support)" and patient_phase == "Conversational Onboarding":
+    onboarding_gate_key = f"onboarding_gate_choice::{thread_key}"
+    onboarding_reschedule_key = f"onboarding_reschedule_choice::{thread_key}"
+    if onboarding_gate_key not in st.session_state:
+        st.session_state[onboarding_gate_key] = None
+    if onboarding_reschedule_key not in st.session_state:
+        st.session_state[onboarding_reschedule_key] = None
+
+    if st.session_state[onboarding_gate_key] is None:
+        gate_text = "Hi Sarah! I'm Movy. Would you like to start your onboarding session now or reschedule it? [BUTTON: Start onboarding] [BUTTON: Reschedule]"
+        if not st.session_state.chat_threads[thread_key] or st.session_state.chat_threads[thread_key][-1]["content"] != gate_text:
+            st.session_state.chat_threads[thread_key].append({
+                "role": "assistant",
+                "content": gate_text,
+                "ts": datetime.now().isoformat(timespec="seconds")
+            })
+            st.rerun()
+
 st.session_state.messages = st.session_state.chat_threads[thread_key]
 
 # Display chat messages (excluding the hidden system instructions)
@@ -1083,6 +1101,22 @@ if app_mode == "Patient (Rehab Support)" and patient_phase == "Conversational Ch
         and st.session_state.get(checkin_reschedule_key) is None
     ):
         resched_text = "No problem. Would you like to reschedule your check-in in [BUTTON: 30 minutes], [BUTTON: 1 hour], or [BUTTON: 2 hours]?"
+        if st.session_state.messages[-1]["content"] != resched_text:
+            st.session_state.messages.append({
+                "role": "assistant",
+                "content": resched_text,
+                "ts": datetime.now().isoformat(timespec="seconds")
+            })
+            st.rerun()
+
+if app_mode == "Patient (Rehab Support)" and patient_phase == "Conversational Onboarding":
+    onboarding_gate_key = f"onboarding_gate_choice::{thread_key}"
+    onboarding_reschedule_key = f"onboarding_reschedule_choice::{thread_key}"
+    if (
+        st.session_state.get(onboarding_gate_key) == "reschedule"
+        and st.session_state.get(onboarding_reschedule_key) is None
+    ):
+        resched_text = "No problem. When would you like to be reminded? [BUTTON: 30 minutes], [BUTTON: 1 hour], or [BUTTON: 2 hours]?"
         if st.session_state.messages[-1]["content"] != resched_text:
             st.session_state.messages.append({
                 "role": "assistant",
@@ -1189,15 +1223,30 @@ if app_mode == "Patient (Rehab Support)" and st.session_state.messages:
                         if btn_label == "Continue check-in":
                             st.session_state[f"checkin_gate_choice::{thread_key}"] = "continue"
                             st.session_state[f"checkin_reschedule_choice::{thread_key}"] = "not_needed"
-                            st.session_state.messages.append({
-                                "role": "assistant",
-                                "content": "Great, let's continue the check-in. Thinking about the exercise session you just finished—how much did you complete? [BUTTON: All exercises], [BUTTON: Some exercises], or [BUTTON: None].",
-                                "ts": datetime.now().isoformat(timespec="seconds")
-                            })
                         elif btn_label == "Postpone check-in":
                             st.session_state[f"checkin_gate_choice::{thread_key}"] = "postpone"
                             st.session_state[f"checkin_reschedule_choice::{thread_key}"] = None
                         
+                        # Special logic for onboarding gates
+                        elif btn_label == "Start onboarding":
+                            st.session_state[f"onboarding_gate_choice::{thread_key}"] = "start"
+                            st.session_state[f"onboarding_reschedule_choice::{thread_key}"] = "not_needed"
+                        elif btn_label == "Reschedule":
+                            st.session_state[f"onboarding_gate_choice::{thread_key}"] = "reschedule"
+                            st.session_state[f"onboarding_reschedule_choice::{thread_key}"] = None
+                        
+                        # General reschedule handler
+                        elif btn_label in ["30 minutes", "1 hour", "2 hours"]:
+                            if patient_phase == "Conversational Check-In":
+                                st.session_state[f"checkin_reschedule_choice::{thread_key}"] = btn_label
+                            else:
+                                st.session_state[f"onboarding_reschedule_choice::{thread_key}"] = btn_label
+                            st.session_state.messages.append({
+                                "role": "assistant",
+                                "content": f"Perfect. I'll remind you in {btn_label}. See you soon!",
+                                "ts": datetime.now().isoformat(timespec="seconds")
+                            })
+
                         st.rerun()
 
 # User input
