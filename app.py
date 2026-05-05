@@ -1235,9 +1235,23 @@ if app_mode == "Patient (Rehab Support)" and st.session_state.messages:
             st.markdown("""
                 <div style='background:#ffffff; border:1px solid #2B5CD9; border-radius:18px; padding:1.5rem; margin:1rem 0; text-align:center;'>
                     <h4 style='color:#1E4CBD; margin-top:0;'>Select Pain Location</h4>
-                    <p style='font-size:0.9rem; color:#475569;'>Tap the areas where you felt discomfort.</p>
+                    <p style='font-size:0.9rem; color:#475569;'>Tap the areas on the silhouette where you felt discomfort, or use the buttons below.</p>
                 </div>
             """, unsafe_allow_html=True)
+            
+            try:
+                from silhouette_component import st_silhouette
+                selected_parts = st_silhouette(key=f"silhouette_{len(st.session_state.messages)}")
+                if selected_parts:
+                    if st.button(f"Confirm Selections ({len(selected_parts)})", type="primary", use_container_width=True, key=f"confirm_sil_{len(st.session_state.messages)}"):
+                        parts_str = ", ".join(selected_parts)
+                        user_ts = datetime.now().isoformat(timespec="seconds")
+                        st.session_state.messages.append({"role": "user", "content": f"Location: {parts_str}", "ts": user_ts})
+                        st.rerun()
+            except ImportError:
+                st.warning("Silhouette component not found. Please use the buttons below.")
+            
+            st.markdown("<hr style='margin: 1.5rem 0; border: none; border-top: 1px dashed #dbe4ff;'/>", unsafe_allow_html=True)
             
             # Stylized Grid for Body Parts
             regions = [

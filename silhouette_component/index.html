@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/streamlit-component-lib/1.3.0/streamlit.js"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+        }
+        svg {
+            width: 100%;
+            max-width: 250px;
+            height: 400px;
+            cursor: pointer;
+        }
+        .part {
+            fill: #e2e8f0;
+            stroke: #94a3b8;
+            stroke-width: 2;
+            transition: fill 0.2s, stroke 0.2s;
+        }
+        .part:hover {
+            fill: #cbd5e1;
+        }
+        .part.selected {
+            fill: #2B5CD9;
+            stroke: #1E4CBD;
+        }
+    </style>
+</head>
+<body>
+    <svg viewBox="0 0 200 400" id="silhouette">
+        <!-- Head & Neck -->
+        <circle cx="100" cy="40" r="25" class="part" data-id="Head" />
+        <rect x="90" y="65" width="20" height="20" class="part" data-id="Neck" />
+        
+        <!-- Torso -->
+        <path d="M60,85 L140,85 L135,135 L65,135 Z" class="part" data-id="Upper Back / Chest" />
+        <path d="M65,135 L135,135 L130,200 L70,200 Z" class="part" data-id="Lower Back / Abdomen" />
+        <path d="M70,200 L130,200 L120,230 L80,230 Z" class="part" data-id="Pelvis / Hips" />
+        
+        <!-- Shoulders & Arms -->
+        <circle cx="50" cy="95" r="15" class="part" data-id="Shoulder (L)" />
+        <circle cx="150" cy="95" r="15" class="part" data-id="Shoulder (R)" />
+        <rect x="35" y="105" width="20" height="70" rx="10" transform="rotate(15 45 105)" class="part" data-id="Arm (L)" />
+        <rect x="145" y="105" width="20" height="70" rx="10" transform="rotate(-15 155 105)" class="part" data-id="Arm (R)" />
+        
+        <!-- Legs -->
+        <rect x="75" y="225" width="22" height="100" rx="10" class="part" data-id="Leg (L)" />
+        <rect x="103" y="225" width="22" height="100" rx="10" class="part" data-id="Leg (R)" />
+        
+        <!-- Knees -->
+        <circle cx="86" cy="335" r="12" class="part" data-id="Knee (L)" />
+        <circle cx="114" cy="335" r="12" class="part" data-id="Knee (R)" />
+        
+        <!-- Feet -->
+        <rect x="73" y="345" width="26" height="30" rx="5" class="part" data-id="Ankle / Foot (L)" />
+        <rect x="101" y="345" width="26" height="30" rx="5" class="part" data-id="Ankle / Foot (R)" />
+    </svg>
+
+    <script>
+        let selectedParts = new Set();
+
+        function sendValue() {
+            Streamlit.setComponentValue(Array.from(selectedParts));
+        }
+
+        function onRender(event) {
+            Streamlit.setFrameHeight(420);
+        }
+
+        Streamlit.events.addEventListener(Streamlit.RENDER_EVENT, onRender);
+        Streamlit.setComponentReady();
+        
+        document.querySelectorAll('.part').forEach(el => {
+            el.addEventListener('click', function(e) {
+                const partId = this.getAttribute('data-id');
+                if (selectedParts.has(partId)) {
+                    selectedParts.delete(partId);
+                    this.classList.remove('selected');
+                } else {
+                    selectedParts.add(partId);
+                    this.classList.add('selected');
+                }
+                sendValue();
+            });
+        });
+    </script>
+</body>
+</html>
