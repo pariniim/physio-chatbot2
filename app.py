@@ -613,13 +613,28 @@ def clean_ui_tags(text):
     return cleaned
 
 
+import base64
+import os
+
+@st.cache_data
+def get_ai_icon_base64():
+    """Reads the AI icon and returns a base64 string, or an empty string if not found."""
+    icon_path = "ai_icon.png"
+    if os.path.exists(icon_path):
+        with open(icon_path, "rb") as f:
+            encoded = base64.b64encode(f.read()).decode()
+            return f"<img src='data:image/png;base64,{encoded}' style='width:32px; height:32px; border-radius:50%; object-fit:cover; margin-bottom:2px;' alt='AI'>"
+    return ""
+
 def render_assistant_bubble(text, ts_value=None):
     display_text = clean_ui_tags(text)
     safe_text = html.escape(display_text).replace("\n", "<br>")
     ts_label = format_message_timestamp(ts_value)
+    icon_html = get_ai_icon_base64()
     st.markdown(
         f"""
-        <div style="display:flex; justify-content:flex-start; margin:0.35rem 0;">
+        <div style="display:flex; justify-content:flex-start; margin:0.35rem 0; align-items:flex-end; gap:8px;">
+          {icon_html}
           <div style="max-width:82%; background:#C4603A; color:#ffffff; padding:0.7rem 0.85rem 0.45rem 0.85rem;
                       border-radius:18px 18px 18px 6px; box-shadow:0 2px 8px rgba(15,23,42,0.10);
                       border:1px solid #b4532c;">
@@ -1348,9 +1363,11 @@ if st.session_state.messages and st.session_state.messages[-1]["role"] == "user"
                 if chunk.choices[0].delta.content is not None:
                     full_response += chunk.choices[0].delta.content
                     safe_stream = html.escape(full_response + "▌").replace("\n", "<br>")
+                    icon_html = get_ai_icon_base64()
                     message_placeholder.markdown(
                         f"""
-                        <div style="display:flex; justify-content:flex-start; margin:0.35rem 0;">
+                        <div style="display:flex; justify-content:flex-start; margin:0.35rem 0; align-items:flex-end; gap:8px;">
+                          {icon_html}
                           <div style="max-width:82%; background:#C4603A; color:#ffffff; padding:0.7rem 0.85rem;
                                       border-radius:18px 18px 18px 6px; box-shadow:0 2px 8px rgba(15,23,42,0.10);
                                       border:1px solid #b4532c;">
