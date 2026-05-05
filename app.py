@@ -300,7 +300,7 @@ CHECK-IN STRUCTURE
 Q1 - ADHERENCE & SKIPPED EXERCISES
 1. Ask how much of the session was completed: [BUTTON: All exercises], [BUTTON: Some exercises], [BUTTON: None].
 2. If "Some exercises":
-   - Ask which exercises were skipped. Use the already uploaded image 'exercises_example_thumbnail.png' as the option for the exercise instead of writing 'Exercise 1'. Use the multi-select format: [MULTI-SELECT: exercises_example_thumbnail.png, Exercise 2, Exercise 3].
+   - Ask which exercises were skipped. Present all exercises as thumbnails using the 'exercises_example_thumbnail.png' image and format it exactly like this: [MULTI-SELECT: exercises_example_thumbnail.png (Exercise 1), exercises_example_thumbnail.png (Exercise 2), exercises_example_thumbnail.png (Exercise 3), exercises_example_thumbnail.png (Exercise 4), exercises_example_thumbnail.png (Exercise 5)].
    - For each skipped exercise (or for the group), ask WHY they were skipped. Use the multi-select format: [MULTI-SELECT: Lack of time, Too much pain, Too difficult, Forgot how to do it, Other].
    - Encourage the user to select all that apply.
 3. If "None":
@@ -317,7 +317,7 @@ Q2 - PAIN INTENSITY (MANDATORY)
 Q3 - PAIN DETAILS (Only if Pain Level > 0)
 *IMPORTANT: Ask each of the following questions in a SEPARATE turn. Do not combine them.*
 
-1. TOPIC: EXERCISES. Ask: "Which exercises created pain or discomfort?" Present as multi-select buttons: [MULTI-SELECT: Exercise 1, Exercise 2, Exercise 3, Exercise 4, Exercise 5, All of them].
+1. TOPIC: EXERCISES. Ask: "Which exercises created pain or discomfort?" Present as multi-select buttons using the thumbnails: [MULTI-SELECT: exercises_example_thumbnail.png (Exercise 1), exercises_example_thumbnail.png (Exercise 2), exercises_example_thumbnail.png (Exercise 3), exercises_example_thumbnail.png (Exercise 4), exercises_example_thumbnail.png (Exercise 5), All of them].
 2. WAIT for the user's response.
 3. TOPIC: LOCATION. Ask: "Where exactly did you feel this sensation?" Present the body map: [BODYMAP].
 4. WAIT for the user's response.
@@ -1181,13 +1181,22 @@ if app_mode == "Patient (Rehab Support)" and st.session_state.messages:
                     is_selected = opt in st.session_state[state_key]
                     
                     with cols[c_idx % 3]:
+                        img_path = opt
+                        display_label = opt
+                        
+                        # Check for 'image.png (Label)' format
+                        img_match = re.search(r"^(.*?\.png|.*?\.jpg|.*?\.jpeg|.*?\.gif)\s*\((.*?)\)$", opt, re.IGNORECASE)
+                        if img_match:
+                            img_path = img_match.group(1).strip()
+                            display_label = img_match.group(2).strip()
+
                         # Handle image options
-                        if opt.lower().endswith(('.png', '.jpg', '.jpeg', '.gif')):
-                            if os.path.exists(opt):
-                                st.image(opt, use_container_width=True)
+                        if img_path.lower().endswith(('.png', '.jpg', '.jpeg', '.gif')):
+                            if os.path.exists(img_path):
+                                st.image(img_path, use_container_width=True)
                             else:
-                                st.caption(f"[Image: {opt}]")
-                            label = "✓ Selected" if is_selected else "Select"
+                                st.caption(f"[Image: {img_path}]")
+                            label = f"✓ {display_label}" if is_selected else display_label
                         else:
                             label = f"✓ {opt}" if is_selected else opt
                             
