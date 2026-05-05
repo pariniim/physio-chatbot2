@@ -295,6 +295,9 @@ SESSION CONTEXT (MANDATORY)
 - This check-in is a post-session check-in: always frame questions around the exercise session the patient has just completed (not a generic "since last time" unless they bring it up).
 - Use wording like "this session," "the exercises you just did," or "right after your session."
 
+STRICT UI RULES:
+- **No Label Duplication**: If you provide a choice via [BUTTON: ...] or [MULTI-SELECT: ...], do NOT list those same options in the text of your message. The buttons or thumbnails themselves are the options.
+
 CHECK-IN STRUCTURE
 
 Q1 - ADHERENCE & SKIPPED EXERCISES
