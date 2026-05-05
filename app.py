@@ -581,10 +581,10 @@ def parse_buttons(text):
 def parse_multi_select(text):
     """Extract options from text formatted as [MULTI-SELECT: Option 1, Option 2, ...]"""
     matches = re.findall(r"\[MULTI-SELECT:\s*(.*?)\]", text, re.IGNORECASE)
-    options = []
+    groups = []
     for match in matches:
-        options.extend([opt.strip() for opt in match.split(",")])
-    return options
+        groups.append([opt.strip() for opt in match.split(",")])
+    return groups
 
 
 def parse_slider(text):
@@ -1140,8 +1140,8 @@ if app_mode == "Patient (Rehab Support)" and st.session_state.messages:
     last_msg = st.session_state.messages[-1]
     if last_msg["role"] == "assistant":
         # Handle Multi-Select
-        multi_options = parse_multi_select(last_msg["content"])
-        if multi_options:
+        multi_groups = parse_multi_select(last_msg["content"])
+        if multi_groups:
             state_key = f"multi_select_state_{len(st.session_state.messages)}"
             if state_key not in st.session_state:
                 st.session_state[state_key] = []
@@ -1150,16 +1150,21 @@ if app_mode == "Patient (Rehab Support)" and st.session_state.messages:
             st.caption("Select all that apply:")
             
             # Use columns for options
-            cols = st.columns(3)
-            for idx, opt in enumerate(multi_options):
-                is_selected = opt in st.session_state[state_key]
-                label = f"✓ {opt}" if is_selected else opt
-                if cols[idx % 3].button(label, key=f"ms_{state_key}_{idx}", use_container_width=True):
-                    if opt in st.session_state[state_key]:
-                        st.session_state[state_key].remove(opt)
-                    else:
-                        st.session_state[state_key].append(opt)
-                    st.rerun()
+            btn_idx = 0
+            for g_idx, group in enumerate(multi_groups):
+                if g_idx > 0:
+                    st.markdown("<hr style='margin: 0.8rem 0; border: none; border-top: 1px solid #dbe4ff;'/>", unsafe_allow_html=True)
+                cols = st.columns(3)
+                for c_idx, opt in enumerate(group):
+                    is_selected = opt in st.session_state[state_key]
+                    label = f"✓ {opt}" if is_selected else opt
+                    if cols[c_idx % 3].button(label, key=f"ms_{state_key}_{btn_idx}", use_container_width=True):
+                        if opt in st.session_state[state_key]:
+                            st.session_state[state_key].remove(opt)
+                        else:
+                            st.session_state[state_key].append(opt)
+                        st.rerun()
+                    btn_idx += 1
             st.markdown("</div>", unsafe_allow_html=True)
 
         # Handle Slider
@@ -1250,9 +1255,10 @@ if app_mode == "Patient (Rehab Support)" and st.session_state.messages:
                         st.rerun()
                         
         # Render Confirm Selection at the very bottom if multi-select exists
-        if multi_options:
+        if multi_groups:
             if st.button("Confirm Selection", type="primary", use_container_width=True):
                 if st.session_state[state_key]:
+
                     user_ts = datetime.now().isoformat(timespec="seconds")
                     selected_str = ", ".join(st.session_state[state_key])
                     st.session_state.messages.append({"role": "user", "content": selected_str, "ts": user_ts})
