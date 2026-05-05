@@ -1197,7 +1197,7 @@ if app_mode == "Patient (Rehab Support)" and patient_phase == "Conversational Ch
         st.session_state.get(checkin_gate_key) == "postpone"
         and st.session_state.get(checkin_reschedule_key) is None
     ):
-        resched_text = "No problem. Would you like to reschedule your check-in in [BUTTON: 30 minutes], [BUTTON: 1 hour], or [BUTTON: 2 hours]?"
+        resched_text = "No problem. Would you like to reschedule your check-in in: [BUTTON: 30 minutes] [BUTTON: 1 hour] [BUTTON: 2 hours]"
         if st.session_state.messages[-1]["content"] != resched_text:
             st.session_state.messages.append({
                 "role": "assistant",
@@ -1213,7 +1213,7 @@ if app_mode == "Patient (Rehab Support)" and patient_phase == "Conversational On
         st.session_state.get(onboarding_gate_key) == "reschedule"
         and st.session_state.get(onboarding_reschedule_key) is None
     ):
-        resched_text = "No problem. When would you like to be reminded? [BUTTON: 30 minutes], [BUTTON: 1 hour], or [BUTTON: 2 hours]?"
+        resched_text = "No problem. When would you like to be reminded? [BUTTON: 30 minutes] [BUTTON: 1 hour] [BUTTON: 2 hours]"
         if st.session_state.messages[-1]["content"] != resched_text:
             st.session_state.messages.append({
                 "role": "assistant",
