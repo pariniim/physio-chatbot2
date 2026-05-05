@@ -231,8 +231,10 @@ STAGE 0 - IDENTITY & CLINIC
 2. Ask them to confirm if this information is correct. 
    Use buttons: [BUTTON: Yes, that's me], [BUTTON: No, edit details].
 3. If they say no, ask for the correct name and date of birth.
-4. Ask which Physiotherapist they are seeing.
-5. Once confirmed, move to Stage 1.
+4. Ask: "Which physiotherapist are you seeing?" 
+   Provide the following options as buttons: 
+   [BUTTON: Dr. Emma Walsh], [BUTTON: Dr. David Smith], [BUTTON: Dr. Priya Nair], [BUTTON: Dr. Maria Di Stefano], [BUTTON: Other].
+5. Once a physiotherapist is selected, proceed to Stage 1.
 
 STAGE 1 - EXERCISE SCHEDULE
 1. Ask: "When would you like to perform your exercises during the week? You can specify days and times that work best for you."
