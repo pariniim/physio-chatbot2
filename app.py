@@ -230,7 +230,7 @@ STRICT PROGRESSION RULES:
 - NEVER JUMP TO THE SUMMARY REVIEW (STAGE 4) UNTIL YOU HAVE FINISHED STAGE 3.
 
 STAGE 0 - IDENTITY & CLINIC
-1. Greet the patient. You already have their record: **Sarah, born on June 19, 1999**.
+1. Jump straight into the onboarding (do NOT greet the patient or introduce yourself, as you have already done so). You already have their record: **Sarah, born on June 19, 1999**.
 2. Ask them to confirm if this information is correct. 
    Use buttons: [BUTTON: Yes, that's me], [BUTTON: No, edit details].
 3. If they say no, ask for the correct name and date of birth.
@@ -303,7 +303,7 @@ CHECK-IN STRUCTURE
 Q1 - ADHERENCE & SKIPPED EXERCISES
 1. Ask how much of the session was completed: [BUTTON: All exercises], [BUTTON: Some exercises], [BUTTON: None].
 2. If "Some exercises":
-   - Ask which exercises were skipped. Present all exercises as thumbnails using the 'media/images/exercises_example_thumbnail.png' image and format it exactly like this: [MULTI-SELECT: media/images/exercises_example_thumbnail.png (Hip Flexor Stretch), media/images/exercises_example_thumbnail.png (Glute Bridge), media/images/exercises_example_thumbnail.png (Side Plank), media/images/exercises_example_thumbnail.png (Clamshell), media/images/exercises_example_thumbnail.png (Quad Stretch)].
+   - Ask which exercises were skipped. Present all exercises as thumbnails exactly like this: [MULTI-SELECT: media/images/exercise_thumbnails/C3.jpg (Hip Flexor Stretch), media/images/exercise_thumbnails/C9.jpg (Glute Bridge), media/images/exercise_thumbnails/C2.jpg (Side Plank), media/images/exercise_thumbnails/C6.jpg (Clamshell)].
    - For each skipped exercise (or for the group), ask WHY they were skipped. Use the multi-select format: [MULTI-SELECT: Lack of time, Too much pain, Too difficult, Forgot how to do it, Other].
    - Encourage the user to select all that apply.
 3. If "None":
@@ -320,7 +320,7 @@ Q2 - PAIN INTENSITY (MANDATORY)
 Q3 - PAIN DETAILS (Only if Pain Level > 0)
 *IMPORTANT: Ask each of the following questions in a SEPARATE turn. Do not combine them.*
 
-1. TOPIC: EXERCISES. Ask: "Which exercises created pain or discomfort?" Present as multi-select buttons using the thumbnails: [MULTI-SELECT: media/images/exercises_example_thumbnail.png (Hip Flexor Stretch), media/images/exercises_example_thumbnail.png (Glute Bridge), media/images/exercises_example_thumbnail.png (Side Plank), media/images/exercises_example_thumbnail.png (Clamshell), media/images/exercises_example_thumbnail.png (Quad Stretch), All of them].
+1. TOPIC: EXERCISES. Ask: "Which exercises created pain or discomfort?" Present as multi-select buttons using the thumbnails: [MULTI-SELECT: media/images/exercise_thumbnails/C3.jpg (Hip Flexor Stretch), media/images/exercise_thumbnails/C9.jpg (Glute Bridge), media/images/exercise_thumbnails/C2.jpg (Side Plank), media/images/exercise_thumbnails/C6.jpg (Clamshell), All of them].
 2. WAIT for the user's response.
 3. TOPIC: LOCATION. Ask: "Where exactly did you feel this sensation?" Present the body map: [BODYMAP].
 4. WAIT for the user's response.
@@ -1221,7 +1221,7 @@ if app_mode == "Patient (Rehab Support)" and st.session_state.messages:
                                 st.image(img_path, use_container_width=True)
                             else:
                                 st.caption(f"[Image: {img_path}]")
-                            label = f"✓ {display_label}" if is_selected else display_label
+                            label = f"✓ Selected" if is_selected else "Select"
                         else:
                             label = f"✓ {opt}" if is_selected else opt
                             
