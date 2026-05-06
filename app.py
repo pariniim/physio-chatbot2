@@ -302,15 +302,17 @@ STRICT UI RULES:
 CHECK-IN STRUCTURE
 
 Q1 - ADHERENCE & SKIPPED EXERCISES
+*IMPORTANT: Ask each of the following questions in a SEPARATE turn. Do not combine them.*
 1. Ask how much of the session was completed: [BUTTON: All exercises], [BUTTON: Some exercises], [BUTTON: None].
-2. If "Some exercises":
-   - Ask which exercises were skipped. Present all exercises as thumbnails exactly like this: [MULTI-SELECT: media/images/exercise_thumbnails/C3.jpg (Hip Flexor Stretch), media/images/exercise_thumbnails/C9.jpg (Glute Bridge), media/images/exercise_thumbnails/C2.jpg (Side Plank), media/images/exercise_thumbnails/C6.jpg (Clamshell)].
-   - For each skipped exercise (or for the group), ask WHY they were skipped. Use the multi-select format: [MULTI-SELECT: Lack of time, Too much pain, Too difficult, Forgot how to do it, Other].
-   - Encourage the user to select all that apply.
-3. If "None":
+2. WAIT for the user's response.
+3. If "Some exercises":
+   - Ask which exercises were skipped. Present all exercises as thumbnails exactly like this: [MULTI-SELECT: media/images/exercise_thumbnails/C3.jpg (Hip Flexor Stretch), media/images/exercise_thumbnails/C9.jpg (Glute Bridge), media/images/exercise_thumbnails/C2.jpg (Side Plank), media/images/exercise_thumbnails/C6.jpg (Clamshell)]. Do NOT add any "Other" button.
+   - WAIT for the user's response.
+   - Ask WHY they were skipped. Use the multi-select format: [MULTI-SELECT: Lack of time, Too much pain, Too difficult, Forgot how to do it, Other].
+4. If "None":
    - Ask WHY the entire session was skipped. Use the multi-select format: [MULTI-SELECT: Lack of time, Too much pain, Too difficult, Forgot how to do it, Other].
    - Log "Session skipped" in the status.
-4. Map responses to internal fields.
+5. Map responses to internal fields.
 
 Q2 - PAIN INTENSITY (MANDATORY)
 1. Ask one short question: "Did you feel any discomfort or pain during or after the session?"
@@ -321,7 +323,7 @@ Q2 - PAIN INTENSITY (MANDATORY)
 Q3 - PAIN DETAILS (Only if Pain Level > 0)
 *IMPORTANT: Ask each of the following questions in a SEPARATE turn. Do not combine them.*
 
-1. TOPIC: EXERCISES. Ask: "Which exercises created pain or discomfort?" Present as multi-select buttons using the thumbnails: [MULTI-SELECT: media/images/exercise_thumbnails/C3.jpg (Hip Flexor Stretch), media/images/exercise_thumbnails/C9.jpg (Glute Bridge), media/images/exercise_thumbnails/C2.jpg (Side Plank), media/images/exercise_thumbnails/C6.jpg (Clamshell), All of them].
+1. TOPIC: EXERCISES. Ask: "Which exercises created pain or discomfort?" Present as multi-select buttons using ONLY the thumbnails: [MULTI-SELECT: media/images/exercise_thumbnails/C3.jpg (Hip Flexor Stretch), media/images/exercise_thumbnails/C9.jpg (Glute Bridge), media/images/exercise_thumbnails/C2.jpg (Side Plank), media/images/exercise_thumbnails/C6.jpg (Clamshell)].
 2. WAIT for the user's response.
 3. TOPIC: LOCATION. Ask: "Where exactly did you feel this sensation?" Present the body map: [BODYMAP].
 4. WAIT for the user's response.
@@ -1226,7 +1228,8 @@ if app_mode == "Patient (Rehab Support)" and st.session_state.messages:
                         else:
                             label = f"✓ {opt}" if is_selected else opt
                             
-                        if st.button(label, key=f"ms_{state_key}_{btn_idx}", use_container_width=True):
+                        btn_type = "primary" if is_selected else "secondary"
+                        if st.button(label, key=f"ms_{state_key}_{btn_idx}", use_container_width=True, type=btn_type):
                             if opt in st.session_state[state_key]:
                                 st.session_state[state_key].remove(opt)
                             else:
