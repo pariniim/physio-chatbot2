@@ -447,8 +447,8 @@ Return the final summary wrapped in a markdown json block:
 }
 
 PATIENT_PHASE_WELCOME = {
-    "Conversational Onboarding": "Hi, I’m Movy, your rehab companion. Let’s do a quick onboarding so you know exactly how I’ll support you between physio sessions.",
-    "Conversational Check-In": "Hi, I’m Movy. Let’s do your post-session check-in about the exercise session you just completed.",
+    "Conversational Onboarding": "[MASCOT] Hi, I’m Movy, your rehab companion. Let’s do a quick onboarding so you know exactly how I’ll support you between physio sessions.",
+    "Conversational Check-In": "[MASCOT] Hi, I’m Movy. Let’s do your post-session check-in about the exercise session you just completed.",
     "In-Exercise Session": "Hi, I’m Movy. You're already halfway through your exercise session! How are you doing? [BUTTON: Feeling good] [BUTTON: Feeling tired] [BUTTON: I'm hurting]",
 }
 
@@ -633,6 +633,17 @@ def get_ai_icon_base64():
 def render_assistant_bubble(text, ts_value=None):
     display_text = clean_ui_tags(text)
     safe_text = html.escape(display_text).replace("\n", "<br>")
+    
+    if "[MASCOT]" in safe_text:
+        mascot_path = "media/images/movy.png"
+        if os.path.exists(mascot_path):
+            with open(mascot_path, "rb") as f:
+                encoded = base64.b64encode(f.read()).decode()
+            mascot_html = f"<div style='text-align:center;'><img src='data:image/png;base64,{encoded}' style='width:100%; max-width:200px; border-radius:12px; margin-bottom:10px;' alt='Movy'></div>"
+            safe_text = safe_text.replace("[MASCOT]", mascot_html)
+        else:
+            safe_text = safe_text.replace("[MASCOT]", "")
+            
     ts_label = format_message_timestamp(ts_value)
     icon_html = get_ai_icon_base64()
     st.markdown(
@@ -1407,6 +1418,17 @@ if st.session_state.messages and st.session_state.messages[-1]["role"] == "user"
                     # Hide partial UI tags during streaming
                     clean_stream = re.sub(r"\[[^\]]*$", "", clean_stream)
                     safe_stream = html.escape(clean_stream + "▌").replace("\n", "<br>")
+                    
+                    if "[MASCOT]" in safe_stream:
+                        mascot_path = "media/images/movy.png"
+                        if os.path.exists(mascot_path):
+                            with open(mascot_path, "rb") as f:
+                                encoded = base64.b64encode(f.read()).decode()
+                            mascot_html = f"<div style='text-align:center;'><img src='data:image/png;base64,{encoded}' style='width:100%; max-width:200px; border-radius:12px; margin-bottom:10px;' alt='Movy'></div>"
+                            safe_stream = safe_stream.replace("[MASCOT]", mascot_html)
+                        else:
+                            safe_stream = safe_stream.replace("[MASCOT]", "")
+                            
                     icon_html = get_ai_icon_base64()
                     message_placeholder.markdown(
                         f"""
