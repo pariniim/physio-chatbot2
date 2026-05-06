@@ -306,7 +306,7 @@ Q1 - ADHERENCE & SKIPPED EXERCISES
 1. Ask how much of the session was completed: [BUTTON: All exercises], [BUTTON: Some exercises], [BUTTON: None].
 2. WAIT for the user's response.
 3. If "Some exercises":
-   - Ask which exercises were skipped. Present all exercises as thumbnails exactly like this: [MULTI-SELECT: media/images/exercise_thumbnails/C3.jpg (Hip Flexor Stretch), media/images/exercise_thumbnails/C9.jpg (Glute Bridge), media/images/exercise_thumbnails/C2.jpg (Side Plank), media/images/exercise_thumbnails/C6.jpg (Clamshell)]. Do NOT add any "Other" button.
+   - Ask which exercises were skipped. Present all exercises as thumbnails exactly like this: [MULTI-SELECT: media/images/exercise_thumbnails/C3.jpg, media/images/exercise_thumbnails/C9.jpg, media/images/exercise_thumbnails/C2.jpg, media/images/exercise_thumbnails/C6.jpg]. Do NOT add any "Other" button.
    - WAIT for the user's response.
    - Ask WHY they were skipped. Use the multi-select format: [MULTI-SELECT: Lack of time, Too much pain, Too difficult, Forgot how to do it, Other].
 4. If "None":
@@ -323,7 +323,7 @@ Q2 - PAIN INTENSITY (MANDATORY)
 Q3 - PAIN DETAILS (Only if Pain Level > 0)
 *IMPORTANT: Ask each of the following questions in a SEPARATE turn. Do not combine them.*
 
-1. TOPIC: EXERCISES. Ask: "Which exercises created pain or discomfort?" Present as multi-select buttons using ONLY the thumbnails: [MULTI-SELECT: media/images/exercise_thumbnails/C3.jpg (Hip Flexor Stretch), media/images/exercise_thumbnails/C9.jpg (Glute Bridge), media/images/exercise_thumbnails/C2.jpg (Side Plank), media/images/exercise_thumbnails/C6.jpg (Clamshell)].
+1. TOPIC: EXERCISES. Ask: "Which exercises created pain or discomfort?" Present as multi-select buttons using ONLY the thumbnails: [MULTI-SELECT: media/images/exercise_thumbnails/C3.jpg, media/images/exercise_thumbnails/C9.jpg, media/images/exercise_thumbnails/C2.jpg, media/images/exercise_thumbnails/C6.jpg].
 2. WAIT for the user's response.
 3. TOPIC: LOCATION. Ask: "Where exactly did you feel this sensation?" Present the body map: [BODYMAP].
 4. WAIT for the user's response.
@@ -676,7 +676,38 @@ def render_assistant_bubble(text, ts_value=None):
 
 
 def render_patient_bubble(text, ts_value=None):
-    safe_text = html.escape(text).replace("\n", "<br>")
+    import re
+    import os
+    import base64
+    
+    parts = [p.strip() for p in text.split(",")]
+    processed_parts = []
+    has_images = False
+    
+    for part in parts:
+        img_match = re.search(r"^(.*?\.png|.*?\.jpg|.*?\.jpeg|.*?\.gif)(?:\s*\((.*?)\))?$", part, re.IGNORECASE)
+        if img_match:
+            img_path = img_match.group(1).strip()
+            display_label = img_match.group(2).strip() if img_match.group(2) else ""
+            
+            if os.path.exists(img_path):
+                with open(img_path, "rb") as f:
+                    encoded = base64.b64encode(f.read()).decode()
+                
+                label_html = f"<div style='font-size:0.65rem; color:#475569; margin-top:2px;'>{html.escape(display_label)}</div>" if display_label else ""
+                img_html = f"<div style='display:inline-block; text-align:center; margin:4px; vertical-align:top;'><img src='data:image/jpeg;base64,{encoded}' style='width:64px; height:64px; object-fit:cover; border-radius:8px; border:1px solid #dbe4ff;'>{label_html}</div>"
+                processed_parts.append(img_html)
+                has_images = True
+            else:
+                processed_parts.append(html.escape(part))
+        else:
+            processed_parts.append(html.escape(part))
+            
+    if has_images:
+        safe_text = "<div style='display:flex; flex-wrap:wrap; justify-content:flex-end;'>" + "".join(processed_parts) + "</div>"
+    else:
+        safe_text = html.escape(text).replace("\n", "<br>")
+        
     ts_label = format_message_timestamp(ts_value)
     st.markdown(
         f"""
@@ -1212,11 +1243,11 @@ if app_mode == "Patient (Rehab Support)" and st.session_state.messages:
                         img_path = opt
                         display_label = opt
                         
-                        # Check for 'image.png (Label)' format
-                        img_match = re.search(r"^(.*?\.png|.*?\.jpg|.*?\.jpeg|.*?\.gif)\s*\((.*?)\)$", opt, re.IGNORECASE)
+                        # Check for 'image.png (Label)' OR just 'image.png'
+                        img_match = re.search(r"^(.*?\.png|.*?\.jpg|.*?\.jpeg|.*?\.gif)(?:\s*\((.*?)\))?$", opt, re.IGNORECASE)
                         if img_match:
                             img_path = img_match.group(1).strip()
-                            display_label = img_match.group(2).strip()
+                            display_label = img_match.group(2).strip() if img_match.group(2) else ""
 
                         # Handle image options
                         if img_path.lower().endswith(('.png', '.jpg', '.jpeg', '.gif')):
