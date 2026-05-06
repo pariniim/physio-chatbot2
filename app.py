@@ -313,6 +313,7 @@ Q1 - ADHERENCE & SKIPPED EXERCISES
 4. If "None":
    - Ask WHY the entire session was skipped. Use the multi-select format: [MULTI-SELECT: Lack of time, Too much pain, Too difficult, Forgot how to do it, Other].
    - Log "Session skipped" in the status.
+   - SKIP Q2 and Q3 entirely. Go directly to Q4 - CONFIDENCE & DIFFICULTY.
 5. Map responses to internal fields.
 
 Q2 - PAIN INTENSITY (MANDATORY)
