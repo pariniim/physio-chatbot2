@@ -549,15 +549,12 @@ CORE INTERACTIONS
 st.set_page_config(page_title="Physio AI", page_icon="💪", layout="centered")
 
 with st.sidebar:
-    st.header("👤 Interface Mode")
-    app_mode = st.radio("Select Role", ["Patient (Rehab Support)", "Physiotherapist (Clinical Assistant)"])
-    patient_phase = None
-    if app_mode == "Patient (Rehab Support)":
-        st.markdown("### 🧭 Patient Experience Part")
-        patient_phase = st.radio(
-            "Select Experience Part",
-            ["Conversational Onboarding", "Conversational Check-In", "In-Exercise Session"],
-        )
+    st.header("🧭 Experience Part")
+    app_mode = "Patient (Rehab Support)"  # Role selection hidden — patient mode only
+    patient_phase = st.radio(
+        "Select Experience Part",
+        ["Conversational Onboarding", "Conversational Check-In", "In-Exercise Session"],
+    )
     st.markdown("---")
 
 if app_mode == "Patient (Rehab Support)":
