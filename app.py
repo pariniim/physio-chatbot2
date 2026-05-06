@@ -303,7 +303,7 @@ CHECK-IN STRUCTURE
 Q1 - ADHERENCE & SKIPPED EXERCISES
 1. Ask how much of the session was completed: [BUTTON: All exercises], [BUTTON: Some exercises], [BUTTON: None].
 2. If "Some exercises":
-   - Ask which exercises were skipped. Present all exercises as thumbnails using the 'exercises_example_thumbnail.png' image and format it exactly like this: [MULTI-SELECT: exercises_example_thumbnail.png (Hip Flexor Stretch), exercises_example_thumbnail.png (Glute Bridge), exercises_example_thumbnail.png (Side Plank), exercises_example_thumbnail.png (Clamshell), exercises_example_thumbnail.png (Quad Stretch)].
+   - Ask which exercises were skipped. Present all exercises as thumbnails using the 'media/images/exercises_example_thumbnail.png' image and format it exactly like this: [MULTI-SELECT: media/images/exercises_example_thumbnail.png (Hip Flexor Stretch), media/images/exercises_example_thumbnail.png (Glute Bridge), media/images/exercises_example_thumbnail.png (Side Plank), media/images/exercises_example_thumbnail.png (Clamshell), media/images/exercises_example_thumbnail.png (Quad Stretch)].
    - For each skipped exercise (or for the group), ask WHY they were skipped. Use the multi-select format: [MULTI-SELECT: Lack of time, Too much pain, Too difficult, Forgot how to do it, Other].
    - Encourage the user to select all that apply.
 3. If "None":
@@ -320,7 +320,7 @@ Q2 - PAIN INTENSITY (MANDATORY)
 Q3 - PAIN DETAILS (Only if Pain Level > 0)
 *IMPORTANT: Ask each of the following questions in a SEPARATE turn. Do not combine them.*
 
-1. TOPIC: EXERCISES. Ask: "Which exercises created pain or discomfort?" Present as multi-select buttons using the thumbnails: [MULTI-SELECT: exercises_example_thumbnail.png (Hip Flexor Stretch), exercises_example_thumbnail.png (Glute Bridge), exercises_example_thumbnail.png (Side Plank), exercises_example_thumbnail.png (Clamshell), exercises_example_thumbnail.png (Quad Stretch), All of them].
+1. TOPIC: EXERCISES. Ask: "Which exercises created pain or discomfort?" Present as multi-select buttons using the thumbnails: [MULTI-SELECT: media/images/exercises_example_thumbnail.png (Hip Flexor Stretch), media/images/exercises_example_thumbnail.png (Glute Bridge), media/images/exercises_example_thumbnail.png (Side Plank), media/images/exercises_example_thumbnail.png (Clamshell), media/images/exercises_example_thumbnail.png (Quad Stretch), All of them].
 2. WAIT for the user's response.
 3. TOPIC: LOCATION. Ask: "Where exactly did you feel this sensation?" Present the body map: [BODYMAP].
 4. WAIT for the user's response.
@@ -623,7 +623,7 @@ import os
 @st.cache_data
 def get_ai_icon_base64():
     """Reads the AI icon and returns a base64 string, or an empty string if not found."""
-    icon_path = "ai_icon.png"
+    icon_path = "media/images/ai_icon.png"
     if os.path.exists(icon_path):
         with open(icon_path, "rb") as f:
             encoded = base64.b64encode(f.read()).decode()
@@ -1241,7 +1241,7 @@ if app_mode == "Patient (Rehab Support)" and st.session_state.messages:
             """, unsafe_allow_html=True)
             
             try:
-                from silhouette_component import st_silhouette
+                from media.silhouette_component import st_silhouette
                 selected_parts = st_silhouette(key=f"silhouette_{len(st.session_state.messages)}")
                 if selected_parts:
                     if st.button(f"Confirm Selections ({len(selected_parts)})", type="primary", use_container_width=True, key=f"confirm_sil_{len(st.session_state.messages)}"):
