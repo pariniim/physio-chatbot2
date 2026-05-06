@@ -535,7 +535,17 @@ if app_mode == "Patient (Rehab Support)":
         + "\n\nACTIVE EXPERIENCE PART:\n"
         + PATIENT_PHASE_PROMPTS[patient_phase]
     )
-    welcome_msg = PATIENT_PHASE_WELCOME[patient_phase]
+    if patient_phase == "Conversational Check-In":
+        patient_name = ""
+        if "onboarding_ui" in st.session_state and st.session_state.onboarding_ui.get("name"):
+            patient_name = st.session_state.onboarding_ui["name"]
+            
+        if patient_name:
+            welcome_msg = f"[MASCOT] Hi {patient_name}, let’s do your post-session check-in about the exercise session you just completed."
+        else:
+            welcome_msg = "[MASCOT] Hi there, let’s do your post-session check-in about the exercise session you just completed."
+    else:
+        welcome_msg = PATIENT_PHASE_WELCOME[patient_phase]
 else:
     st.title("🩺 Clinical Assistant AI")
     st.markdown("Your clinical decision support and analysis assistant.")
