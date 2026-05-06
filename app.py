@@ -1400,7 +1400,13 @@ if st.session_state.messages and st.session_state.messages[-1]["role"] == "user"
             for chunk in responses:
                 if chunk.choices[0].delta.content is not None:
                     full_response += chunk.choices[0].delta.content
-                    safe_stream = html.escape(full_response + "▌").replace("\n", "<br>")
+                    import re
+                    clean_stream = clean_ui_tags(full_response)
+                    # Hide partial JSON markdown blocks during streaming
+                    clean_stream = re.sub(r"```json[^`]*$", "", clean_stream, flags=re.IGNORECASE)
+                    # Hide partial UI tags during streaming
+                    clean_stream = re.sub(r"\[[^\]]*$", "", clean_stream)
+                    safe_stream = html.escape(clean_stream + "▌").replace("\n", "<br>")
                     icon_html = get_ai_icon_base64()
                     message_placeholder.markdown(
                         f"""
