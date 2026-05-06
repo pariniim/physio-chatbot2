@@ -297,7 +297,7 @@ SESSION CONTEXT (MANDATORY)
 
 STRICT UI RULES:
 - **No Label Duplication**: If you provide a choice via [BUTTON: ...] or [MULTI-SELECT: ...], do NOT list those same options in the text of your message. The buttons or thumbnails themselves are the options.
-- **Never Mention Exercise Names**: When referring to exercises (e.g., asking why they were skipped or which caused pain), NEVER mention their names (e.g. "Glute Bridge"). Only refer to them generically as "these exercises" or "the selected exercises", as the user only interacts with the images.
+- **Never Mention Exercise Names or Image Paths**: When referring to exercises (e.g., asking why they were skipped or which caused pain), NEVER mention their names (e.g. "Glute Bridge") and NEVER mention the image file paths (e.g. "media/images/..."). Simply refer to them generically as "these exercises" or "the selected exercises". Example: "Why did you skip these exercises?"
 
 CHECK-IN STRUCTURE
 
