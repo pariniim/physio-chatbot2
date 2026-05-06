@@ -298,6 +298,7 @@ SESSION CONTEXT (MANDATORY)
 STRICT UI RULES:
 - **No Label Duplication**: If you provide a choice via [BUTTON: ...] or [MULTI-SELECT: ...], do NOT list those same options in the text of your message. The buttons or thumbnails themselves are the options.
 - **Never Mention Exercise Names or Image Paths**: When referring to exercises (e.g., asking why they were skipped or which caused pain), NEVER mention their names (e.g. "Glute Bridge") and NEVER mention the image file paths (e.g. "media/images/..."). Simply refer to them generically as "these exercises" or "the selected exercises". Example: "Why did you skip these exercises?"
+- **Empathy & Tone**: Show natural empathy when the patient reports pain, skips exercises, or finds them hard. React briefly to their struggle before moving on, but NEVER mention exercise names or file paths while doing so.
 
 CHECK-IN STRUCTURE
 
@@ -344,7 +345,15 @@ Q5 - OPEN REFLECTION
 2. WAIT for the user's response.
 
 Q6 - SUMMARY REVIEW
-1. Present a clear, readable Markdown-formatted summary of all the information collected during this check-in (adherence, pain details, confidence, difficulty, notes).
+1. Do NOT write a bulleted list. Instead, output the summary exactly in this JSON format inside a tag:
+[CHECKIN_SUMMARY: {
+  "adherence": "...",
+  "skipped_reason": "...",
+  "pain_summary": "...",
+  "confidence": "...",
+  "difficulty": "...",
+  "other_notes": "..."
+}]
 2. Ask the patient to confirm if the information is correct. Provide buttons: [BUTTON: Yes, confirm check-in], [BUTTON: No, edit details].
 3. WAIT for the user's response.
 4. If they need to make changes, ask them what they would like to correct, update the summary, and repeat the confirmation.
@@ -612,6 +621,16 @@ def parse_profile_summary(text):
             return None
     return None
 
+def parse_checkin_summary(text):
+    """Extract checkin summary JSON from text formatted as [CHECKIN_SUMMARY: { ... }]"""
+    match = re.search(r"\[CHECKIN_SUMMARY:\s*(\{.*?\})\s*\]", text, re.IGNORECASE | re.DOTALL)
+    if match:
+        try:
+            return json.loads(match.group(1))
+        except:
+            return None
+    return None
+
 
 def clean_ui_tags(text):
     """Remove tags from text for display"""
@@ -620,6 +639,7 @@ def clean_ui_tags(text):
     cleaned = re.sub(r"\[SLIDER:\s*(.*?),\s*(\d+),\s*(\d+)\]", r"", cleaned, flags=re.IGNORECASE)
     cleaned = re.sub(r"\[BODYMAP\]", r"", cleaned, flags=re.IGNORECASE)
     cleaned = re.sub(r"\[PROFILE_SUMMARY:\s*\{.*?\}\s*\]", r"", cleaned, flags=re.IGNORECASE | re.DOTALL)
+    cleaned = re.sub(r"\[CHECKIN_SUMMARY:\s*\{.*?\}\s*\]", r"", cleaned, flags=re.IGNORECASE | re.DOTALL)
     # Strip markdown JSON blocks
     cleaned = re.sub(r"```json\s*\{.*?\}\s*```", r"", cleaned, flags=re.IGNORECASE | re.DOTALL)
     # Also strip raw { ... } JSON if it appears at the very end of the text
@@ -1292,7 +1312,7 @@ if app_mode == "Patient (Rehab Support)" and st.session_state.messages:
             st.markdown("""
                 <div style='background:#ffffff; border:1px solid #2B5CD9; border-radius:18px; padding:1.5rem; margin:1rem 0; text-align:center;'>
                     <h4 style='color:#1E4CBD; margin-top:0;'>Select Pain Location</h4>
-                    <p style='font-size:0.9rem; color:#475569;'>Tap the areas on the silhouette where you felt discomfort, or use the buttons below.</p>
+                    <p style='font-size:0.9rem; color:#475569;'>Tap the areas on the silhouette where you felt discomfort.</p>
                 </div>
             """, unsafe_allow_html=True)
             
@@ -1306,25 +1326,7 @@ if app_mode == "Patient (Rehab Support)" and st.session_state.messages:
                         st.session_state.messages.append({"role": "user", "content": f"Location: {parts_str}", "ts": user_ts})
                         st.rerun()
             except ImportError:
-                st.warning("Silhouette component not found. Please use the buttons below.")
-            
-            st.markdown("<hr style='margin: 1.5rem 0; border: none; border-top: 1px dashed #dbe4ff;'/>", unsafe_allow_html=True)
-            
-            # Stylized Grid for Body Parts
-            regions = [
-                ["Neck", "Upper Back", "Shoulders"],
-                ["Lower Back", "Chest", "Abdomen"],
-                ["Hip (L)", "Hip (R)", "Pelvis"],
-                ["Knee (L)", "Knee (R)", "Ankle (L)", "Ankle (R)"]
-            ]
-            
-            for row in regions:
-                cols = st.columns(len(row))
-                for idx, part in enumerate(row):
-                    if cols[idx].button(part, key=f"body_part_{part}_{len(st.session_state.messages)}", use_container_width=True):
-                        user_ts = datetime.now().isoformat(timespec="seconds")
-                        st.session_state.messages.append({"role": "user", "content": f"Location: {part}", "ts": user_ts})
-                        st.rerun()
+                st.warning("Silhouette component not found.")
 
         # Handle Profile Summary
         profile_data = parse_profile_summary(last_msg["content"])
@@ -1347,6 +1349,23 @@ if app_mode == "Patient (Rehab Support)" and st.session_state.messages:
                     </div>
                     <div style='margin-top:0.8rem;'>
                         <strong>Main Motivation:</strong> {html.escape(profile_data.get('main_motivation', ''))}
+                    </div>
+                </div>
+            """, unsafe_allow_html=True)
+
+        # Handle Check-In Summary
+        checkin_data = parse_checkin_summary(last_msg["content"])
+        if checkin_data:
+            st.markdown(f"""
+                <div style='background:#ffffff; border:1px solid #dbe4ff; border-radius:14px; padding:1.5rem; margin-bottom:1rem; color:#1D2440; box-shadow:0 4px 6px rgba(0,0,0,0.05);'>
+                    <h3 style='color:#1E4CBD; margin-top:0; border-bottom:2px solid #f1f5f9; padding-bottom:0.5rem;'>Check-In Summary</h3>
+                    <div style='display:grid; grid-template-columns: 1fr; gap:0.8rem; margin-top:1rem;'>
+                        <div><strong>Adherence:</strong> {html.escape(checkin_data.get('adherence', ''))}</div>
+                        <div><strong>Skipped Reason:</strong> {html.escape(checkin_data.get('skipped_reason', ''))}</div>
+                        <div><strong>Pain Summary:</strong> {html.escape(checkin_data.get('pain_summary', ''))}</div>
+                        <div><strong>Confidence:</strong> {html.escape(checkin_data.get('confidence', ''))}</div>
+                        <div><strong>Difficulty:</strong> {html.escape(checkin_data.get('difficulty', ''))}</div>
+                        <div><strong>Other Notes:</strong> {html.escape(checkin_data.get('other_notes', ''))}</div>
                     </div>
                 </div>
             """, unsafe_allow_html=True)
